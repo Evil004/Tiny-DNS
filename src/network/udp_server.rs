@@ -2,7 +2,7 @@ use std::{io, sync::Arc};
 
 use tokio::net::UdpSocket;
 
-use crate::protocol::dns_query::DnsQuery;
+use crate::protocol::{dns_query::DnsQueryPacket, dns_response::DnsResponsePacket};
 
 pub struct Server {
     socket: Arc<UdpSocket>,
@@ -11,7 +11,9 @@ pub struct Server {
 impl Server {
     pub async fn new() -> io::Result<Server> {
         let socket = UdpSocket::bind("0.0.0.0:53").await?;
-        return Ok(Server { socket: Arc::new(socket) });
+        return Ok(Server {
+            socket: Arc::new(socket),
+        });
     }
 
     pub async fn start(&self) -> io::Result<()> {
@@ -27,12 +29,12 @@ impl Server {
             }
         }
     }
-
-    
 }
 
-fn handle_query(buf: &[u8]) -> Vec<u8> {
-    let (_, query) = DnsQuery::parse_query_from_bit_input((buf, 0)).unwrap();
-    println!("{:?}", query);
-    return vec![];
+fn handle_query(buf: &[u8]) {
+    let (_, query) = DnsQueryPacket::parse_query_from_bit_input((buf, 0)).unwrap();
+
+    let response = DnsResponsePacket::from_query(query, 600, vec![192, 168, 1, 1]);
+
+    println!("{:?}", response);
 }
