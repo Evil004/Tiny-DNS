@@ -14,7 +14,7 @@ pub struct DnsHeader {
     recursion_desired: bool,    // 1  bit
     recursion_available: bool,  // 1  bit
 
-    z: u8,           // 4  bit
+    z: u8,             // 4  bit
     response_code: u8, // 4  bits
 
     question_count: u16, // 16 bits
@@ -24,7 +24,7 @@ pub struct DnsHeader {
 }
 
 impl DnsHeader {
-    pub fn parse_header_from_bit_input(input: BitInput) -> IResult<BitInput, DnsHeader> {
+    pub fn deserialize_header_from_bit_input(input: BitInput) -> IResult<BitInput, DnsHeader> {
         let (input, id) = take_16bits(input)?;
         let (input, is_response) = take_1bit_bool(input)?;
 
@@ -61,4 +61,5 @@ impl DnsHeader {
 
         return Ok((input, header));
     }
+
 }
