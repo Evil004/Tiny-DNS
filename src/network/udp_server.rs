@@ -2,7 +2,10 @@ use std::{io, sync::Arc};
 
 use tokio::net::UdpSocket;
 
-use crate::protocol::{dns_query::DnsQueryPacket, dns_response::DnsResponsePacket};
+use crate::{
+    parsing::deserialize::Deserialize,
+    protocol::{dns_query::DnsQueryPacket, dns_response::DnsResponsePacket},
+};
 
 pub struct Server {
     socket: Arc<UdpSocket>,
@@ -24,17 +27,24 @@ impl Server {
 
             if let Ok((num_bytes, _src)) = socket.clone().recv_from(&mut buf).await {
                 tokio::task::spawn(async move {
-                    handle_query(buf[..num_bytes].as_ref());
+                    let response = handle_query(buf[..num_bytes].as_ref());
+
+                    socket
+                        .send_to(&response, &_src)
+                        .await
+                        .expect("Failed to send response");
                 });
             }
         }
     }
 }
 
-fn handle_query(buf: &[u8]) {
-    let (_, query) = DnsQueryPacket::parse_query_from_bit_input((buf, 0)).unwrap();
+fn handle_query(buf: &[u8]) -> Vec<u8> {
+    let (_, query) = DnsQueryPacket::deserialize((buf, 0)).unwrap();
 
-    let response = DnsResponsePacket::from_query(query, 600, vec![192, 168, 1, 1]);
+    let _ = DnsResponsePacket::from_query(query, 600, vec![192, 168, 1, 1]);
 
-    println!("{:?}", response);
+    //let bytes: Vec<u8> = response.serialize().into_vec();
+
+    return Vec::new();
 }

@@ -1,6 +1,6 @@
 use nom::IResult;
 
-use crate::parsing::BitInput;
+use crate::parsing::deserialize::{BitInput, Deserialize};
 
 use super::{dns_header::DnsHeader, dns_question::DnsQuestion};
 
@@ -12,13 +12,14 @@ pub struct DnsQueryPacket {
     
 }
 
-impl DnsQueryPacket {
-    pub fn parse_query_from_bit_input(input: BitInput) -> IResult<BitInput, DnsQueryPacket> {
-        let (input, header) = DnsHeader::deserialize_header_from_bit_input(input)?;
+impl Deserialize for DnsQueryPacket{
+    fn deserialize(input: BitInput) -> IResult<BitInput, DnsQueryPacket> {
+        let (input, header) = DnsHeader::deserialize(input)?;
 
-        let (input, question) = DnsQuestion::deserialize_from_bit_input(input)?;
+        let (input, question) = DnsQuestion::deserialize(input)?;
 
         let query = DnsQueryPacket { header, question };
         return Ok((input, query));
     }
 }
+
