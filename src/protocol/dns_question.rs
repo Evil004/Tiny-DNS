@@ -1,6 +1,6 @@
 use nom::IResult;
 
-use crate::parsing::deserialize::{parse_qname, take_16bits, BitInput, Deserialize};
+use crate::parsing::deserialize::{deserialize_domain_names, take_16bits, BitInput};
 
 use super::domain_names::DomainNames;
 
@@ -11,9 +11,9 @@ pub struct DnsQuestion {
     pub qclass: u16,
 }
 
-impl Deserialize for DnsQuestion {
-    fn deserialize(input: BitInput) -> IResult<BitInput, Self> {
-        let (input, qname) = parse_qname(input)?;
+impl DnsQuestion {
+    pub fn deserialize(input: BitInput, question_count: u16) -> IResult<BitInput, Self> {
+        let (input, qname) = deserialize_domain_names(input, question_count)?;
         let (input, qtype) = take_16bits(input)?;
         let (input, qclass) = take_16bits(input)?;
         return Ok((

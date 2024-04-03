@@ -8,6 +8,11 @@ impl DomainNames {
     pub fn new(labels_array: Vec<Label>) -> DomainNames {
         return DomainNames { labels_array };
     }
+
+    pub fn get_labels(&self) -> Vec<Label> {
+        return self.labels_array.clone();
+    }
+
     #[allow(dead_code)]
     pub fn get_domains(&self) -> Vec<String> {
         let mut domains = Vec::new();
@@ -83,9 +88,9 @@ impl DomainNames {
 
 #[derive(Clone, Debug)]
 pub struct Label {
-    len: u8,
-    string: String,
-    next: Next,
+    pub len: u8,
+    pub string: String,
+    pub next: Next,
 }
 
 impl Label {
