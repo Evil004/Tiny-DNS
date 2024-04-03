@@ -85,22 +85,17 @@ pub fn serialize_domain_names(domain_names: DomainNames) -> BitVec<u8, Msb0> {
             vec.append(&mut serialize_num_of_bits_u8_to_bit_vec(8, c as u8));
         }
 
-        dbg!(label.clone());
-
-        match label.next {
+       match label.next {
             Next::End => {
                 vec.append(&mut serialize_byte(0b0));
             }
             Next::Label => {}
             Next::Pointer { pos } => {
-                dbg!(vec.clone());
                 vec.push(true);
                 vec.push(true);
-                dbg!(vec.clone());
 
                 let mut pos = serialize_14last_bits_to_bit_vec(pos);
                 vec.append(&mut pos);
-                dbg!(vec.clone());
 
                 break;
             }

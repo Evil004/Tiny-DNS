@@ -1,12 +1,15 @@
 use nom::IResult;
 
-use crate::parsing::deserialize::{deserialize_domain_names, take_16bits, BitInput};
+use crate::parsing::{
+    deserialize::{deserialize_domain_names, take_16bits, BitInput},
+    serialize::{serialize_16bits_to_bit_vec, serialize_domain_names, Serialize},
+};
 
 use super::domain_names::DomainNames;
 
 #[derive(Debug)]
 pub struct DnsQuestion {
-    pub qname: DomainNames,
+    pub domain_names: DomainNames,
     pub qtype: u16,
     pub qclass: u16,
 }
@@ -19,7 +22,7 @@ impl DnsQuestion {
         return Ok((
             input,
             DnsQuestion {
-                qname,
+                domain_names: qname,
                 qtype,
                 qclass,
             },
@@ -27,13 +30,12 @@ impl DnsQuestion {
     }
 }
 
-/* impl Serialize for DnsQuestion{
+impl Serialize for DnsQuestion {
     fn serialize(&self) -> bitvec::prelude::BitVec<u8, bitvec::prelude::Msb0> {
         let mut vec: bitvec::prelude::BitVec<_, _> = bitvec::prelude::BitVec::new();
-        vec.append(&mut serialize_qname(self.qname.clone()));
-        vec.push(false);
+        vec.append(&mut serialize_domain_names(self.domain_names.clone()));
         vec.append(&mut serialize_16bits_to_bit_vec(self.qtype));
         vec.append(&mut serialize_16bits_to_bit_vec(self.qclass));
         return vec;
     }
-} */
+}

@@ -13,7 +13,14 @@ impl DomainNames {
         return self.labels_array.clone();
     }
 
-    #[allow(dead_code)]
+    pub fn get_total_len(&self) -> usize {
+        let mut total_len = 0;
+        for label in self.labels_array.iter() {
+            total_len += label.len as usize + 1;
+        }
+        return total_len;
+    }
+
     pub fn get_domains(&self) -> Vec<String> {
         let mut domains = Vec::new();
         let mut domain = String::new();

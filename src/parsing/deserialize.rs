@@ -39,27 +39,25 @@ pub fn deserialize_domain_names(
     let mut final_input = input;
 
     while domain_count < num_of_domains as usize {
-        dbg!(labels.clone());
-        let (input, label): (BitInput, Label) = parse_label(final_input)?;
-        final_input = input;
-        labels.push(label.clone());
-        if let Next::End = label.next {
+        if let (input, Some(label)) = parse_label(final_input)? {
+            final_input = input;
+            labels.push(label.clone());
+            if let Next::End = label.next {
+                domain_count += 1;
+            }
+        } else {
             domain_count += 1;
         }
     }
-
-    labels.pop();
-
     let domain_names = DomainNames::new(labels);
     return Ok((final_input, domain_names));
 }
 
-pub fn parse_label(input: BitInput) -> IResult<BitInput, Label> {
-    dbg!(input.clone());
+pub fn parse_label(input: BitInput) -> IResult<BitInput, Option<Label>> {
     let (input, chars_count): (BitInput, u8) = take(8usize)(input)?;
 
     if chars_count == 0 {
-        return Ok((input, Label::new(0, "".to_string(), Next::End)));
+        return Ok((input, None));
     }
 
     let (input, chars_in_u64): (BitInput, u64) = take(chars_count * 8)(input)?;
@@ -77,7 +75,7 @@ pub fn parse_label(input: BitInput) -> IResult<BitInput, Label> {
 
     let label = Label::new(chars_count, label_string, next);
 
-    return Ok((input, label));
+    return Ok((input, Some(label)));
 }
 
 fn get_next(input: BitInput) -> IResult<BitInput, Next> {

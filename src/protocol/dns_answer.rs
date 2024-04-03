@@ -1,3 +1,5 @@
+use std::fmt::Pointer;
+
 use bitvec::{order::Msb0, vec::BitVec};
 
 use crate::parsing::serialize::{
@@ -6,10 +8,12 @@ use crate::parsing::serialize::{
 
 use super::{dns_question::DnsQuestion, domain_names::DomainNames};
 
+const FIRST_REGISTER_TO_POINT: u16 = 12;
+
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct DnsAnswer {
-    domain_name: DomainNames,
+    domain_name: Vec<u8>,
     response_type: u16,  // 16 bits
     response_class: u16, // 16 bits
     ttl: u32,            // 32 bits
@@ -19,8 +23,11 @@ pub struct DnsAnswer {
 
 impl DnsAnswer {
     pub fn from_query(query: &DnsQuestion, ttl: u32, rdata: Vec<u8>) -> DnsAnswer {
+
+        let pointer = 0b1100_1100u8;
+
         return DnsAnswer {
-            domain_name: query.qname.clone(),
+            domain_name: vec![pointer],
             response_type: query.qtype,
             response_class: query.qclass,
             ttl: ttl,

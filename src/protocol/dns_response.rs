@@ -1,3 +1,7 @@
+use bitvec::{order::Msb0, vec::BitVec};
+
+use crate::parsing::serialize::Serialize;
+
 use super::{
     dns_answer::DnsAnswer, dns_header::DnsHeader, dns_query::DnsQueryPacket,
     dns_question::DnsQuestion,
@@ -41,7 +45,7 @@ impl DnsResponsePacket {
 }
  */
 
-/* impl Serialize for DnsResponsePacket {
+impl Serialize for DnsResponsePacket {
     fn serialize(&self) -> BitVec<u8, Msb0> {
         let mut vec: BitVec<u8, Msb0> = BitVec::new();
         vec.append(&mut self.header.serialize());
@@ -50,4 +54,4 @@ impl DnsResponsePacket {
 
         return vec;
     }
-} */
+} 

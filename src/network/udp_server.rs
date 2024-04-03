@@ -3,7 +3,7 @@ use std::{io, sync::Arc};
 use tokio::net::UdpSocket;
 
 use crate::{
-    parsing::deserialize::Deserialize,
+    parsing::{deserialize::Deserialize, serialize::Serialize},
     protocol::{dns_query::DnsQueryPacket, dns_response::DnsResponsePacket},
 };
 
@@ -42,9 +42,9 @@ impl Server {
 fn handle_query(buf: &[u8]) -> Vec<u8> {
     let (_, query) = DnsQueryPacket::deserialize((buf, 0)).unwrap();
 
-    let _ = DnsResponsePacket::from_query(query, 600, vec![192, 168, 1, 1]);
+    let response = DnsResponsePacket::from_query(query, 600, vec![192, 168, 1, 1]);
 
-    //let bytes: Vec<u8> = response.serialize().into_vec();
+    let bytes: Vec<u8> = response.serialize().into_vec();
 
-    return Vec::new();
+    return bytes;
 }
