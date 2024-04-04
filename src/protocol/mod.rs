@@ -4,3 +4,5 @@ pub mod dns_question;
 pub mod dns_response;
 pub mod dns_answer;
 pub mod domain_names;
+
+const DNS_HEADER_SIZE_IN_BYTES: u16 = 12;

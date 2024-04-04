@@ -27,14 +27,11 @@ mod serialize_and_deserialize_tests {
         );
 
         let vec = super::serialize::serialize_domain_names(domain_names.clone());
-        dbg!("After serialize");
         let buf = vec.into_vec();
 
-        dbg!("After into_vec");
         let (res, des_domain_names) =
             super::deserialize::deserialize_domain_names((&buf, 0), 1).unwrap();
 
-            dbg!("After deserialize");
         let domains = domain_names.get_domains();
         let des_domains = des_domain_names.get_domains();
 

@@ -16,7 +16,7 @@ pub struct DnsQueryPacket {
 impl Deserialize for DnsQueryPacket{
     fn deserialize(input: BitInput) -> IResult<BitInput, DnsQueryPacket> {
         let (input, header) = DnsHeader::deserialize(input)?;
-        println!("{:?}",header);
+
         let (input, question) = DnsQuestion::deserialize(input, header.question_count)?;
 
         let query = DnsQueryPacket { header, question };

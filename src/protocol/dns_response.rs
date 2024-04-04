@@ -16,8 +16,8 @@ pub struct DnsResponsePacket {
 }
 
 impl DnsResponsePacket {
-    pub fn from_query(mut query: DnsQueryPacket, ttl: u32, rdata: Vec<u8>) -> DnsResponsePacket {
-        let answers = DnsAnswer::from_query(&query.question, ttl, rdata);
+    pub fn from_query(mut query: DnsQueryPacket, ttl: u32) -> DnsResponsePacket {
+        let answers = DnsAnswer::from_query(&query.question, ttl);
 
         query.header.set_as_response(1);
 

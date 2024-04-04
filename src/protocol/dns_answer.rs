@@ -1,15 +1,23 @@
 use bitvec::{order::Msb0, vec::BitVec};
 
-use crate::parsing::serialize::{
-    serialize_16bits_to_bit_vec, serialize_32bits_to_bit_vec, serialize_byte, Serialize,
+use crate::{
+    parsing::serialize::{
+        serialize_16bits_to_bit_vec, serialize_32bits_to_bit_vec, serialize_byte,
+        serialize_domain_names, Serialize,
+    },
+    resolver::resolv,
 };
 
-use super::dns_question::DnsQuestion;
+use super::{
+    dns_question::DnsQuestion,
+    domain_names::{DomainNames, DomainParts},
+    DNS_HEADER_SIZE_IN_BYTES,
+};
 
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct DnsAnswer {
-    domain_name: Vec<u8>,
+    domain_name: DomainNames,
     response_type: u16,  // 16 bits
     response_class: u16, // 16 bits
     ttl: u32,            // 32 bits
@@ -18,12 +26,29 @@ pub struct DnsAnswer {
 }
 
 impl DnsAnswer {
-    pub fn from_query(query: &DnsQuestion, ttl: u32, rdata: Vec<u8>) -> DnsAnswer {
-        let pointer1 = 0b1100_0000u8;
-        let pointer2 = 0b0000_1100u8;
+    pub fn from_query(query: &DnsQuestion, ttl: u32) -> DnsAnswer {
+        let query_size = query.domain_names.get_total_len();
+
+        let mut domain_parts = Vec::new();
+        let mut rdata = Vec::new();
+
+        for domain in query.domain_names.get_domains() {
+            let resolved_name = resolv(domain.0.as_ref(), query.qtype, query.qclass);
+
+            rdata.append(resolved_name.direction.to_vec().as_mut());
+
+            domain_parts.push(DomainParts::Pointer {
+                pos: DNS_HEADER_SIZE_IN_BYTES + domain.1 as u16,
+            });
+        }
+
+        let domain_names = DomainNames::new_from_vec_with_starting_point(
+            domain_parts,
+            query_size as u16 + DNS_HEADER_SIZE_IN_BYTES,
+        );
 
         return DnsAnswer {
-            domain_name: vec![pointer1, pointer2],
+            domain_name: domain_names,
             response_type: query.qtype,
             response_class: query.qclass,
             ttl: ttl,
@@ -38,8 +63,7 @@ impl Serialize for DnsAnswer {
         let mut vec: BitVec<u8, Msb0> = BitVec::new();
 
         // TODO: Implement domain name serialization
-        vec.append(&mut serialize_byte(self.domain_name[0]));
-        vec.append(&mut serialize_byte(self.domain_name[1]));
+        vec.append(&mut serialize_domain_names(self.domain_name.clone()));
         vec.append(&mut serialize_16bits_to_bit_vec(self.response_type));
         vec.append(&mut serialize_16bits_to_bit_vec(self.response_class));
         vec.append(&mut serialize_32bits_to_bit_vec(self.ttl));
