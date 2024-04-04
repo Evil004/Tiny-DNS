@@ -42,11 +42,14 @@ impl Server {
 fn handle_query(buf: &[u8]) -> Vec<u8> {
     let (_, query) = DnsQueryPacket::deserialize((buf, 0)).unwrap();
 
+    dbg!(&query);
+
     let response = DnsResponsePacket::from_query(query, 600, vec![192, 168, 1, 1]);
+
+    dbg!(&response);
 
     let bytes: Vec<u8> = response.serialize().into_vec();
 
-    println!("{:?}",response.serialize());
 
     return bytes;
 }

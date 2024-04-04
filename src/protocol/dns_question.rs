@@ -34,7 +34,6 @@ impl Serialize for DnsQuestion {
     fn serialize(&self) -> bitvec::prelude::BitVec<u8, bitvec::prelude::Msb0> {
         let mut vec: bitvec::prelude::BitVec<_, _> = bitvec::prelude::BitVec::new();
         vec.append(&mut serialize_domain_names(self.domain_names.clone()));
-        dbg!(&self.domain_names);
         vec.append(&mut serialize_16bits_to_bit_vec(self.qtype));
         vec.append(&mut serialize_16bits_to_bit_vec(self.qclass));
         return vec;

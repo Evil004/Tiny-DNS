@@ -1,6 +1,8 @@
 use bitvec::{order::Msb0, vec::BitVec};
 
-use crate::protocol::domain_names::{DomainNames, Next};
+use crate::protocol::domain_names::{DomainNames, DomainParts};
+
+// TODO: Refactor all this code
 
 pub fn serialize_num_of_bits_u8_to_bit_vec(
     num_of_bits_to_read: u8,
@@ -17,6 +19,8 @@ pub fn serialize_num_of_bits_u8_to_bit_vec(
 
     return vec;
 }
+
+#[allow(dead_code)]
 pub fn serialize_num_of_bits_u16_to_bit_vec(
     num_of_bits_to_read: u8,
     number: u16,
@@ -80,24 +84,19 @@ pub fn serialize_domain_names(domain_names: DomainNames) -> BitVec<u8, Msb0> {
     let labels = domain_names.get_labels();
 
     for label in labels {
-        vec.append(&mut serialize_byte(label.len));
-        for c in label.string.chars() {
-            vec.append(&mut serialize_num_of_bits_u8_to_bit_vec(8, c as u8));
-        }
-
-       match label.next {
-            Next::End => {
-                vec.append(&mut serialize_byte(0b0));
+        match label {
+            DomainParts::Pointer { pos } => {
+                vec.append(&mut serialize_num_of_bits_u8_to_bit_vec(2, 0b11));
+                vec.append(&mut serialize_14last_bits_to_bit_vec(pos));
             }
-            Next::Label => {}
-            Next::Pointer { pos } => {
-                vec.push(true);
-                vec.push(true);
-
-                let mut pos = serialize_14last_bits_to_bit_vec(pos);
-                vec.append(&mut pos);
-
-                break;
+            DomainParts::Label { len, string } => {
+                vec.append(&mut serialize_byte(len));
+                for c in string.as_bytes() {
+                    vec.append(&mut serialize_byte(*c));
+                }
+            }
+            DomainParts::End => {
+                vec.append(&mut serialize_byte(0));
             }
         }
     }

@@ -4,24 +4,37 @@ pub mod serialize;
 #[cfg(test)]
 mod serialize_and_deserialize_tests {
 
-    use crate::protocol::domain_names::{DomainNames, Label, Next};
+    use crate::protocol::domain_names::{DomainNames, DomainParts};
 
     #[test]
     fn serialize_and_deserialize_qname() {
-        let domain_names = DomainNames::new(vec![
-            Label::new(3, "www".to_string(), Next::Label),
-            Label::new(6, "google".to_string(), Next::Label),
-            Label::new(3, "com".to_string(), Next::End),
-            Label::new(6, "images".to_string(), Next::Pointer { pos: 4 }),
-        ]);
+        let domain_names = DomainNames::new_from_vec(
+            vec![
+                DomainParts::Label {
+                    len: 3,
+                    string: String::from("www"),
+                },
+                DomainParts::Label {
+                    len: 6,
+                    string: String::from("google"),
+                },
+                DomainParts::Label {
+                    len: 3,
+                    string: String::from("com"),
+                },
+                DomainParts::End,
+            ]
+        );
 
         let vec = super::serialize::serialize_domain_names(domain_names.clone());
-
+        dbg!("After serialize");
         let buf = vec.into_vec();
 
+        dbg!("After into_vec");
         let (res, des_domain_names) =
-            super::deserialize::deserialize_domain_names((&buf, 0), 2).unwrap();
+            super::deserialize::deserialize_domain_names((&buf, 0), 1).unwrap();
 
+            dbg!("After deserialize");
         let domains = domain_names.get_domains();
         let des_domains = des_domain_names.get_domains();
 

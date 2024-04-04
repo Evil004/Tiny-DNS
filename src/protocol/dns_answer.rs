@@ -1,14 +1,10 @@
-use std::fmt::Pointer;
-
 use bitvec::{order::Msb0, vec::BitVec};
 
 use crate::parsing::serialize::{
     serialize_16bits_to_bit_vec, serialize_32bits_to_bit_vec, serialize_byte, Serialize,
 };
 
-use super::{dns_question::DnsQuestion, domain_names::DomainNames};
-
-const FIRST_REGISTER_TO_POINT: u16 = 12;
+use super::dns_question::DnsQuestion;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -41,14 +37,17 @@ impl Serialize for DnsAnswer {
     fn serialize(&self) -> BitVec<u8, Msb0> {
         let mut vec: BitVec<u8, Msb0> = BitVec::new();
 
+        // TODO: Implement domain name serialization
         vec.append(&mut serialize_byte(self.domain_name[0]));
         vec.append(&mut serialize_byte(self.domain_name[1]));
         vec.append(&mut serialize_16bits_to_bit_vec(self.response_type));
         vec.append(&mut serialize_16bits_to_bit_vec(self.response_class));
         vec.append(&mut serialize_32bits_to_bit_vec(self.ttl));
 
+        // TODO: Implement rdlength serialization
         vec.append(&mut serialize_16bits_to_bit_vec(4u16));
 
+        // TODO: Implement rdata serialization
         for data in &self.rdata {
             vec.append(&mut serialize_byte(*data));
         }

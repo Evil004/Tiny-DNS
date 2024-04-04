@@ -1,22 +1,24 @@
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
+
 pub struct DomainNames {
-    labels_array: Vec<Label>,
+    labels_array: Vec<DomainParts>,
 }
 
+#[allow(dead_code)]
 impl DomainNames {
-    pub fn new(labels_array: Vec<Label>) -> DomainNames {
+    pub fn new_from_vec(labels_array: Vec<DomainParts>) -> DomainNames {
         return DomainNames { labels_array };
     }
 
-    pub fn get_labels(&self) -> Vec<Label> {
+    pub fn get_labels(&self) -> Vec<DomainParts> {
         return self.labels_array.clone();
     }
 
     pub fn get_total_len(&self) -> usize {
         let mut total_len = 0;
         for label in self.labels_array.iter() {
-            total_len += label.len as usize + 1;
+            total_len += label.get_size() as usize
         }
         return total_len;
     }
@@ -26,21 +28,18 @@ impl DomainNames {
         let mut domain = String::new();
 
         for label in self.labels_array.iter() {
-            domain.push_str(&label.string);
-            match label.next {
-                Next::Label => {
-                    domain.push_str(".");
-                }
-                Next::End => {
+            match label {
+                DomainParts::Pointer { pos } => {
+                    dbg!("Outer Pointer",pos);
+                    domain.push_str(&self.get_domain_from_pos(*pos));
                     domains.push(domain.clone());
                     domain.clear();
                 }
-                Next::Pointer { pos } => {
-                    let labels = self.get_from_pos(pos).to_vec();
-
-                    let pointer_domain = self.get_domain_for_pointer(labels);
-                    domain.push_str(".");
-                    domain.push_str(&pointer_domain);
+                DomainParts::Label { len: _, string } => {
+                    domain.push_str(&format!("{}.", string));
+                }
+                DomainParts::End => {
+                    domain.pop();
                     domains.push(domain.clone());
                     domain.clear();
                 }
@@ -50,41 +49,42 @@ impl DomainNames {
         return domains;
     }
 
-    fn get_domain_for_pointer(&self, label_vec: Vec<Label>) -> String {
-        let mut domains = Vec::new();
+    fn get_domain_from_pos(&self, pos: u16) -> String {
         let mut domain = String::new();
 
-        for label in label_vec {
-            domain.push_str(&label.string);
-            match label.next {
-                Next::Label => {
-                    domain.push_str(".");
-                }
-                Next::End => {
-                    domains.push(domain.clone());
-                    domain.clear();
-                    break;
-                }
-                Next::Pointer { pos } => {
-                    let labels = self.get_from_pos(pos).to_vec();
-                    let pointer_domain = self.get_domain_for_pointer(labels);
+        let labels = self.get_from_pos(pos);
+        for label in labels {
+            dbg!(label);
 
-                    domain.push_str(".");
-                    domain.push_str(&pointer_domain);
-                    domains.push(domain.clone());
-                    break;
+            match label {
+                DomainParts::Pointer { pos } => {
+                    dbg!("Inner Pointer",pos);
+
+                    domain.push_str(&self.get_domain_from_pos(*pos));
+                    return domain;
+                }
+                DomainParts::Label { len: _, string } => {
+                    domain.push_str(&format!("{}.", string));
+                }
+                DomainParts::End => {
+                    domain.pop();
+                    return domain;
                 }
             }
         }
-        return domains.join("");
+
+        return domain;
     }
 
-    fn get_from_pos(&self, pos: u16) -> &[Label] {
+    fn get_from_pos(&self, pos: u16) -> &[DomainParts] {
         let mut reading_pos = 0;
+
         for (i, label) in self.labels_array.iter().enumerate() {
-            if pos != reading_pos {
-                reading_pos += label.len as u16 + 1;
+            dbg!(label, reading_pos, pos);
+            if pos > reading_pos {
+                reading_pos += label.get_size()
             } else {
+                dbg!(i, &self.labels_array[i..]);
                 return &self.labels_array[i..];
             }
         }
@@ -94,27 +94,20 @@ impl DomainNames {
 }
 
 #[derive(Clone, Debug)]
-pub struct Label {
-    pub len: u8,
-    pub string: String,
-    pub next: Next,
-}
-
-impl Label {
-    pub fn new(len: u8, string: String, next: Next) -> Label {
-        return Label {
-            len: len,
-            string: string,
-            next: next,
-        };
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum Next {
+pub enum DomainParts {
     Pointer { pos: u16 },
-    Label,
+    Label { len: u8, string: String },
     End,
+}
+
+impl DomainParts {
+    pub fn get_size(&self) -> u16 {
+        match self {
+            DomainParts::Pointer { .. } => 2,
+            DomainParts::Label { len, .. } => *len as u16 + 1,
+            DomainParts::End => 1,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -125,75 +118,90 @@ mod tests {
     fn test_get_domain() {
         let domain_names = DomainNames {
             labels_array: vec![
-                Label {
+                DomainParts::Label {
                     len: 3,
-                    string: "www".to_string(),
-                    next: Next::Label,
+                    string: String::from("www"),
                 },
-                Label {
+                DomainParts::Label {
                     len: 6,
-                    string: "google".to_string(),
-                    next: Next::Label,
+                    string: String::from("google"),
                 },
-                Label {
+                DomainParts::Label {
                     len: 3,
-                    string: "com".to_string(),
-                    next: Next::End,
+                    string: String::from("com"),
                 },
-                Label {
-                    len: 6,
-                    string: "images".to_string(),
-                    next: Next::Pointer { pos: 4 },
-                },
-                Label {
-                    len: 4,
-                    string: "test".to_string(),
-                    next: Next::Pointer { pos: 4 },
-                },
+                DomainParts::End,
             ],
         };
 
         let domains = domain_names.get_domains();
 
-        assert_eq!(
-            domains,
-            vec!["www.google.com", "images.google.com", "test.google.com"]
-        );
+        assert_eq!(domains, vec!["www.google.com"]);
+    }
+
+    #[test]
+    fn test_get_domain_wiht_pointer() {
+        let domain_names = DomainNames {
+            labels_array: vec![
+                DomainParts::Label {
+                    len: 3,
+                    string: String::from("www"),
+                },
+                DomainParts::Label {
+                    len: 6,
+                    string: String::from("google"),
+                },
+                DomainParts::Label {
+                    len: 3,
+                    string: String::from("com"),
+                },
+                DomainParts::End,
+                DomainParts::Label {
+                    len: 6,
+                    string: String::from("images"),
+                },
+                DomainParts::Pointer { pos: 4 },
+            ],
+        };
+
+        let domains = domain_names.get_domains();
+
+        assert_eq!(domains, vec!["www.google.com", "images.google.com"]);
     }
 
     #[test]
     fn test_get_domain_with_pointer_to_pointer() {
         let domain_names = DomainNames {
             labels_array: vec![
-                Label {
+                DomainParts::Label {
                     len: 3,
-                    string: "www".to_string(),
-                    next: Next::Label,
+                    string: String::from("www"),
                 },
-                Label {
+                DomainParts::Label {
                     len: 6,
-                    string: "google".to_string(),
-                    next: Next::Label,
+                    string: String::from("google"),
                 },
-                Label {
+                DomainParts::Label {
                     len: 3,
-                    string: "com".to_string(),
-                    next: Next::End,
+                    string: String::from("com"),
                 },
-                Label {
+                DomainParts::End,
+                DomainParts::Label {
                     len: 6,
-                    string: "images".to_string(),
-                    next: Next::Pointer { pos: 4 },
+                    string: String::from("images"),
                 },
-                Label {
+                DomainParts::Pointer { pos: 4 },
+                DomainParts::Label {
                     len: 4,
-                    string: "test".to_string(),
-                    next: Next::Pointer { pos: 15 },
+                    string: String::from("test"),
                 },
+                DomainParts::Pointer { pos: 16 },
             ],
         };
+        dbg!("Before get_domains");
 
         let domains = domain_names.get_domains();
+        dbg!("After get_domains");
 
         assert_eq!(
             domains,
