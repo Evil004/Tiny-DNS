@@ -23,11 +23,11 @@ pub struct DnsAnswer {
 
 impl DnsAnswer {
     pub fn from_query(query: &DnsQuestion, ttl: u32, rdata: Vec<u8>) -> DnsAnswer {
-
-        let pointer = 0b1100_1100u8;
+        let pointer1 = 0b1100_0000u8;
+        let pointer2 = 0b0000_1100u8;
 
         return DnsAnswer {
-            domain_name: vec![pointer],
+            domain_name: vec![pointer1, pointer2],
             response_type: query.qtype,
             response_class: query.qclass,
             ttl: ttl,
@@ -41,9 +41,13 @@ impl Serialize for DnsAnswer {
     fn serialize(&self) -> BitVec<u8, Msb0> {
         let mut vec: BitVec<u8, Msb0> = BitVec::new();
 
+        vec.append(&mut serialize_byte(self.domain_name[0]));
+        vec.append(&mut serialize_byte(self.domain_name[1]));
         vec.append(&mut serialize_16bits_to_bit_vec(self.response_type));
         vec.append(&mut serialize_16bits_to_bit_vec(self.response_class));
         vec.append(&mut serialize_32bits_to_bit_vec(self.ttl));
+
+        vec.append(&mut serialize_16bits_to_bit_vec(4u16));
 
         for data in &self.rdata {
             vec.append(&mut serialize_byte(*data));

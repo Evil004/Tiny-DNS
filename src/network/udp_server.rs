@@ -46,5 +46,7 @@ fn handle_query(buf: &[u8]) -> Vec<u8> {
 
     let bytes: Vec<u8> = response.serialize().into_vec();
 
+    println!("{:?}",response.serialize());
+
     return bytes;
 }

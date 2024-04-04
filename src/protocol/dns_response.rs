@@ -50,6 +50,7 @@ impl Serialize for DnsResponsePacket {
         let mut vec: BitVec<u8, Msb0> = BitVec::new();
         vec.append(&mut self.header.serialize());
         vec.append(&mut self.query.serialize());
+        println!("{:?}",self.answers.serialize());
         vec.append(&mut self.answers.serialize());
 
         return vec;

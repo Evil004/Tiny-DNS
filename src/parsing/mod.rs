@@ -19,13 +19,14 @@ mod serialize_and_deserialize_tests {
 
         let buf = vec.into_vec();
 
-        let (_, des_domain_names) =
+        let (res, des_domain_names) =
             super::deserialize::deserialize_domain_names((&buf, 0), 2).unwrap();
 
         let domains = domain_names.get_domains();
         let des_domains = des_domain_names.get_domains();
 
         assert_eq!(domains, des_domains);
+        assert_eq!(res, (&[] as &[u8], 0));
     }
 
     #[test]

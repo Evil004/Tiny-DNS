@@ -102,8 +102,6 @@ pub fn serialize_domain_names(domain_names: DomainNames) -> BitVec<u8, Msb0> {
         }
     }
 
-    vec.append(&mut serialize_byte(0b0));
-
     return vec;
 }
 
