@@ -14,12 +14,8 @@ pub struct DomainNames {
 
 #[allow(dead_code)]
 impl DomainNames {
-    pub fn new_from_vec_with_starting_point(labels_array: Vec<DomainParts>) -> DomainNames {
-        return DomainNames { labels_array };
-    }
-
     pub fn new_from_vec(labels_array: Vec<DomainParts>) -> DomainNames {
-        DomainNames::new_from_vec_with_starting_point(labels_array)
+        return DomainNames { labels_array };
     }
 
     pub fn get_labels(&self) -> Vec<DomainParts> {
@@ -322,7 +318,6 @@ mod tests {
             ]
         );
     }
-
 
     #[test]
     fn serialize_and_deserialize_qname() {

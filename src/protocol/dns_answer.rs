@@ -2,7 +2,12 @@ use bitvec::{order::Msb0, vec::BitVec};
 use nom::IResult;
 
 use crate::{
-    parsing::{deserialize::{take_16bits, take_32bits, take_vec_of_n_bytes, BitInput, DeserializeWithLength}, serialize::{serialize_byte, serialize_n_bits, Serialize}},
+    parsing::{
+        deserialize::{
+            take_16bits, take_32bits, take_vec_of_n_bytes, BitInput, DeserializeWithLength,
+        },
+        serialize::{serialize_byte, serialize_n_bits, Serialize},
+    },
     resolver::resolv,
 };
 
@@ -38,7 +43,7 @@ impl DnsAnswer {
             });
         }
 
-        let domain_name = DomainNames::new_from_vec_with_starting_point(domain_parts);
+        let domain_name = DomainNames::new_from_vec(domain_parts);
 
         DnsAnswer {
             domain_name,
@@ -78,7 +83,7 @@ impl DeserializeWithLength for DnsAnswer {
         let (input, response_class) = take_16bits(input)?;
         let (input, ttl) = take_32bits(input)?;
         let (input, rdlength) = take_16bits(input)?;
-        let (input, rdata) = take_vec_of_n_bytes(input, rdlength )?;
+        let (input, rdata) = take_vec_of_n_bytes(input, rdlength)?;
 
         Ok((
             input,
@@ -91,5 +96,48 @@ impl DeserializeWithLength for DnsAnswer {
                 rdata,
             },
         ))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{parsing::{deserialize::DeserializeWithLength, serialize::Serialize}, protocol::domain_names::DomainNames};
+
+    use super::DnsAnswer;
+
+    #[test]
+
+    pub fn serialize_and_deserialize_dns_answer() {
+        let domain_names = DomainNames::new_from_vec(vec![
+            super::DomainParts::Pointer { pos: 0 },
+            super::DomainParts::Pointer { pos: 2 },
+            
+        ]);
+
+        let answer = super::DnsAnswer {
+            domain_name: domain_names,
+            response_type: 1,
+            response_class: 1,
+            ttl: 600,
+            rdlength: 4,
+            rdata: vec![192,168,1,1],
+        };
+
+        let serialized = answer.serialize();
+        let buf = serialized.into_vec();
+
+        let (rest, deserialized) = DnsAnswer::deserialize((&buf, 0), 4 ).unwrap();
+
+        assert_eq!(rest.1, 0);
+
+        assert_eq!(answer.domain_name.get_domains(), deserialized.domain_name.get_domains());
+
+        assert_eq!(answer.response_type, deserialized.response_type);
+        assert_eq!(answer.response_class, deserialized.response_class);
+        assert_eq!(answer.ttl, deserialized.ttl);
+        assert_eq!(answer.rdlength, deserialized.rdlength);
+        assert_eq!(answer.rdata, deserialized.rdata);
+
+        
     }
 }
