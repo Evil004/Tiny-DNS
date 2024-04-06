@@ -22,7 +22,7 @@ pub struct DnsHeader {
     response_code: u8, // 4  bits
 
     pub question_count: u16, // 16 bits
-    answer_count: u16,       // 16 bits
+    pub answer_count: u16,       // 16 bits
     nscount: u16,            // 16 bits
     arcount: u16,            // 16 bits
 }

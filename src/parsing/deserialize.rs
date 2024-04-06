@@ -1,4 +1,4 @@
-use nom::{bits::complete::take, IResult};
+use nom::{bits::complete::take, multi::count, IResult};
 
 pub type BitInput<'a> = (&'a [u8], usize);
 
@@ -27,8 +27,18 @@ pub fn take_1bit_bool(input: BitInput) -> IResult<BitInput, bool> {
     take_n_bits(input, 1).map(|(input, num)| (input, num == 1))
 }
 
+pub fn take_vec_of_n_bytes(input: BitInput, num_bytes: u16) -> IResult<BitInput, Vec<u8>> {
+    count(take(8usize), num_bytes as usize)(input)
+}
+
 pub trait Deserialize {
     fn deserialize(input: BitInput) -> IResult<BitInput, Self>
     where
         Self: Sized;
+}
+pub trait DeserializeWithLength {
+    fn deserialize(input: BitInput, length: u16) -> IResult<BitInput, Self>
+    where
+        Self: Sized;
+    
 }

@@ -13,7 +13,9 @@ pub struct Server {
 
 impl Server {
     pub async fn new() -> io::Result<Server> {
+        
         let socket = UdpSocket::bind("0.0.0.0:53").await?;
+
         return Ok(Server {
             socket: Arc::new(socket),
         });
@@ -26,6 +28,7 @@ impl Server {
             let socket = self.socket.clone();
 
             if let Ok((num_bytes, _src)) = socket.clone().recv_from(&mut buf).await {
+                
                 tokio::task::spawn(async move {
                     let response = handle_query(buf[..num_bytes].as_ref());
 

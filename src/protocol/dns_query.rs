@@ -1,7 +1,7 @@
 use bitvec::{order::Msb0, vec::BitVec};
 use nom::IResult;
 
-use crate::parsing::{deserialize::{BitInput, Deserialize}, serialize::Serialize};
+use crate::parsing::{deserialize::{BitInput, Deserialize, DeserializeWithLength}, serialize::Serialize};
 
 use super::{dns_header::DnsHeader, dns_question::DnsQuestion};
 
