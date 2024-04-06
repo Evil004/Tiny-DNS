@@ -3,7 +3,7 @@ use nom::IResult;
 
 use crate::parsing::{
     deserialize::{take_16bits, take_1bit_bool, take_3bits, take_4bits, BitInput, Deserialize},
-    serialize::{serialize_16bits_to_bit_vec, serialize_num_of_bits_u8_to_bit_vec, Serialize},
+    serialize::{serialize_n_bits, Serialize},
 };
 
 #[derive(Debug)]
@@ -22,9 +22,9 @@ pub struct DnsHeader {
     response_code: u8, // 4  bits
 
     pub question_count: u16, // 16 bits
-    answer_count: u16,   // 16 bits
-    nscount: u16,        // 16 bits
-    arcount: u16,        // 16 bits
+    answer_count: u16,       // 16 bits
+    nscount: u16,            // 16 bits
+    arcount: u16,            // 16 bits
 }
 
 impl DnsHeader {
@@ -37,22 +37,20 @@ impl DnsHeader {
 impl Serialize for DnsHeader {
     fn serialize(&self) -> BitVec<u8, Msb0> {
         let mut vec: BitVec<u8, Msb0> = BitVec::new();
-        vec.append(&mut serialize_16bits_to_bit_vec(self.id));
+        vec.append(&mut serialize_n_bits(16, self.id as u64));
         vec.push(self.is_response);
-        vec.append(&mut serialize_num_of_bits_u8_to_bit_vec(4, self.opcode));
+        vec.append(&mut serialize_n_bits(4, self.opcode as u64));
         vec.push(self.authoritative_answer);
         vec.push(self.truncated_message);
         vec.push(self.recursion_desired);
         vec.push(self.recursion_available);
-        vec.append(&mut serialize_num_of_bits_u8_to_bit_vec(3, self.z));
-        vec.append(&mut serialize_num_of_bits_u8_to_bit_vec(
-            4,
-            self.response_code,
-        ));
-        vec.append(&mut serialize_16bits_to_bit_vec(self.question_count));
-        vec.append(&mut serialize_16bits_to_bit_vec(self.answer_count));
-        vec.append(&mut serialize_16bits_to_bit_vec(self.nscount));
-        vec.append(&mut serialize_16bits_to_bit_vec(self.arcount));
+
+        vec.append(&mut serialize_n_bits(3, self.z as u64));
+        vec.append(&mut serialize_n_bits(4, self.response_code as u64));
+        vec.append(&mut serialize_n_bits(16, self.question_count as u64));
+        vec.append(&mut serialize_n_bits(16, self.answer_count as u64));
+        vec.append(&mut serialize_n_bits(16, self.nscount as u64));
+        vec.append(&mut serialize_n_bits(16, self.arcount as u64));
 
         return vec;
     }
@@ -99,14 +97,12 @@ impl Deserialize for DnsHeader {
 }
 
 #[cfg(test)]
-mod dns_header_tests{
-    use crate::parsing::serialize::Serialize;
-    use crate::parsing::deserialize::Deserialize;
+mod dns_header_tests {
     use super::DnsHeader;
+    use crate::parsing::deserialize::Deserialize;
+    use crate::parsing::serialize::Serialize;
     #[test]
     fn serialize_and_deserialize_dns_header() {
-        
-
         let header = DnsHeader {
             id: 3241,
             is_response: true,
@@ -131,17 +127,22 @@ mod dns_header_tests{
         assert_eq!(header.id, result_header.id);
         assert_eq!(header.is_response, result_header.is_response);
         assert_eq!(header.opcode, result_header.opcode);
-        assert_eq!(header.authoritative_answer, result_header.authoritative_answer);
+        assert_eq!(
+            header.authoritative_answer,
+            result_header.authoritative_answer
+        );
         assert_eq!(header.truncated_message, result_header.truncated_message);
         assert_eq!(header.recursion_desired, result_header.recursion_desired);
-        assert_eq!(header.recursion_available, result_header.recursion_available);
+        assert_eq!(
+            header.recursion_available,
+            result_header.recursion_available
+        );
         assert_eq!(header.z, result_header.z);
         assert_eq!(header.response_code, result_header.response_code);
         assert_eq!(header.question_count, result_header.question_count);
         assert_eq!(header.answer_count, result_header.answer_count);
         assert_eq!(header.nscount, result_header.nscount);
         assert_eq!(header.arcount, result_header.arcount);
-
     }
 
     #[test]

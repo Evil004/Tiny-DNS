@@ -1,11 +1,7 @@
 use bitvec::{order::Msb0, vec::BitVec};
 
 use crate::{
-    parsing::serialize::{
-        serialize_16bits_to_bit_vec, serialize_32bits_to_bit_vec, serialize_byte,
-        serialize_domain_names, Serialize,
-    },
-    resolver::resolv,
+    parsing::serialize::{serialize_byte, serialize_n_bits, Serialize}, resolver::resolv
 };
 
 use super::{
@@ -27,8 +23,6 @@ pub struct DnsAnswer {
 
 impl DnsAnswer {
     pub fn from_query(query: &DnsQuestion, ttl: u32) -> DnsAnswer {
-        let query_size = query.domain_names.get_total_len();
-
         let mut domain_parts = Vec::new();
         let mut rdata = Vec::new();
 
@@ -43,8 +37,7 @@ impl DnsAnswer {
         }
 
         let domain_names = DomainNames::new_from_vec_with_starting_point(
-            domain_parts,
-            query_size as u16 + DNS_HEADER_SIZE_IN_BYTES,
+            domain_parts
         );
 
         return DnsAnswer {
@@ -62,14 +55,13 @@ impl Serialize for DnsAnswer {
     fn serialize(&self) -> BitVec<u8, Msb0> {
         let mut vec: BitVec<u8, Msb0> = BitVec::new();
 
-        // TODO: Implement domain name serialization
-        vec.append(&mut serialize_domain_names(self.domain_name.clone()));
-        vec.append(&mut serialize_16bits_to_bit_vec(self.response_type));
-        vec.append(&mut serialize_16bits_to_bit_vec(self.response_class));
-        vec.append(&mut serialize_32bits_to_bit_vec(self.ttl));
+        vec.append(&mut self.domain_name.serialize());
+        vec.append(&mut serialize_n_bits(16,self.response_type as u64));
+        vec.append(&mut serialize_n_bits(16,self.response_class as u64));
+        vec.append(&mut serialize_n_bits(32,self.ttl as u64));
 
         // TODO: Implement rdlength serialization
-        vec.append(&mut serialize_16bits_to_bit_vec(4u16));
+        vec.append(&mut serialize_n_bits(16,self.rdlength as u64));
 
         // TODO: Implement rdata serialization
         for data in &self.rdata {

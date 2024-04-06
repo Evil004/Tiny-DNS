@@ -1,33 +1,25 @@
+use bitvec::{order::Msb0, vec::BitVec};
+use nom::{combinator::peek, complete::take, multi::count, IResult};
+
+use crate::parsing::{
+    deserialize::{BitInput, Deserialize},
+    serialize::{serialize_byte, serialize_n_bits, Serialize},
+};
+
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
-
 pub struct DomainNames {
     labels_array: Vec<DomainParts>,
-    starting_byte: u16,
 }
 
 #[allow(dead_code)]
 impl DomainNames {
-    pub fn new_from_vec_with_starting_point(
-        labels_array: Vec<DomainParts>,
-        starting_byte: u16,
-    ) -> DomainNames {
-        return DomainNames {
-            labels_array,
-            starting_byte,
-        };
+    pub fn new_from_vec_with_starting_point(labels_array: Vec<DomainParts>) -> DomainNames {
+        return DomainNames { labels_array };
     }
 
     pub fn new_from_vec(labels_array: Vec<DomainParts>) -> DomainNames {
-        DomainNames::new_from_vec_with_starting_point(labels_array, 0)
-    }
-
-    pub fn set_starting_byte(&mut self, starting_byte: u16) {
-        self.starting_byte = starting_byte;
-    }
-
-    pub fn get_starting_byte(&self) -> u16 {
-        return self.starting_byte;
+        DomainNames::new_from_vec_with_starting_point(labels_array)
     }
 
     pub fn get_labels(&self) -> Vec<DomainParts> {
@@ -122,6 +114,56 @@ impl DomainNames {
     }
 }
 
+impl DomainNames {
+    pub fn deserialize(input: BitInput, num_of_domains: u16) -> IResult<BitInput, DomainNames> {
+        let mut domain_count = 0;
+        let mut parts: Vec<DomainParts> = Vec::new();
+        let mut final_input = input;
+
+        while domain_count < num_of_domains as usize {
+            let (input, part) = DomainParts::deserialize(final_input)?;
+
+            final_input = input;
+
+            if let DomainParts::End = part {
+                domain_count += 1
+            }
+
+            parts.push(part);
+        }
+
+        let domain_names = DomainNames::new_from_vec(parts);
+        return Ok((final_input, domain_names));
+    }
+}
+
+impl Serialize for DomainNames {
+    fn serialize(&self) -> BitVec<u8, Msb0> {
+        let mut vec: BitVec<u8, Msb0> = BitVec::new();
+        let labels = self.get_labels();
+
+        for label in labels {
+            match label {
+                DomainParts::Pointer { pos } => {
+                    vec.append(&mut serialize_n_bits(2, 0b11));
+                    vec.append(&mut serialize_n_bits(14, pos as u64));
+                }
+                DomainParts::Label { len, string } => {
+                    vec.append(&mut serialize_byte(len));
+                    for c in string.as_bytes() {
+                        vec.append(&mut serialize_byte(*c));
+                    }
+                }
+                DomainParts::End => {
+                    vec.append(&mut serialize_byte(0));
+                }
+            }
+        }
+
+        return vec;
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum DomainParts {
     Pointer { pos: u16 },
@@ -136,6 +178,41 @@ impl DomainParts {
             DomainParts::Label { len, .. } => *len as u16 + 1,
             DomainParts::End => 1,
         }
+    }
+}
+
+impl Deserialize for DomainParts {
+    fn deserialize(input: BitInput) -> IResult<BitInput, Self>
+    where
+        Self: Sized,
+    {
+        let (_, next_bits): (BitInput, u8) = peek(take(8u8))(input)?;
+        if next_bits == 0b0 {
+            let (input, _): (BitInput, u8) = take(8u8)(input)?;
+            return Ok((input, DomainParts::End));
+        }
+
+        let (_, next_bits): (BitInput, u8) = peek(take(2u8))(input)?;
+
+        if next_bits == 0b0 {
+            let (input, char_count): (BitInput, u8) = take(8u8)(input)?;
+            let (input, chars): (BitInput, Vec<u8>) =
+                count(take((8) as u16), char_count as usize)(input)?;
+
+            return Ok((
+                input,
+                DomainParts::Label {
+                    len: char_count,
+                    string: chars.iter().map(|c| *c as char).collect::<String>(),
+                },
+            ));
+        }
+
+        let (input, _): (BitInput, u8) = take(2u8)(input)?;
+
+        let (input, pos): (BitInput, u16) = take(14u8)(input)?;
+
+        return Ok((input, DomainParts::Pointer { pos }));
     }
 }
 
@@ -161,7 +238,6 @@ mod tests {
                 },
                 DomainParts::End,
             ],
-            starting_byte: 12,
         };
 
         let domains = domain_names.get_domains();
@@ -192,7 +268,6 @@ mod tests {
                 },
                 DomainParts::Pointer { pos: 4 },
             ],
-            starting_byte: 12,
         };
 
         let domains = domain_names.get_domains();
@@ -234,7 +309,6 @@ mod tests {
                 },
                 DomainParts::Pointer { pos: 16 },
             ],
-            starting_byte: 12,
         };
 
         let domains = domain_names.get_domains();
@@ -247,5 +321,36 @@ mod tests {
                 (String::from("test.images.google.com"), 25u16)
             ]
         );
+    }
+
+
+    #[test]
+    fn serialize_and_deserialize_qname() {
+        let domain_names = DomainNames::new_from_vec(vec![
+            DomainParts::Label {
+                len: 3,
+                string: String::from("www"),
+            },
+            DomainParts::Label {
+                len: 6,
+                string: String::from("google"),
+            },
+            DomainParts::Label {
+                len: 3,
+                string: String::from("com"),
+            },
+            DomainParts::End,
+        ]);
+
+        let vec = domain_names.serialize();
+        let buf = vec.into_vec();
+
+        let (res, des_domain_names) = DomainNames::deserialize((&buf, 0), 1).unwrap();
+
+        let domains = domain_names.get_domains();
+        let des_domains = des_domain_names.get_domains();
+
+        assert_eq!(domains, des_domains);
+        assert_eq!(res, (&[] as &[u8], 0));
     }
 }
