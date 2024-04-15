@@ -1,23 +1,25 @@
 use nom::IResult;
 
 use crate::parsing::{
-    deserialize::{take_16bits, BitInput, DeserializeWithLength}, serialize::{serialize_n_bits, Serialize},
+    deserialize::{BitInput, Deserialize, DeserializeWithLength},
+    serialize::{serialize_n_bits, Serialize},
 };
 
-use super::domain_names::DomainNames;
+use super::{domain_names::DomainNames, Class, Type};
 
 #[derive(Debug)]
 pub struct DnsQuestion {
     pub domain_names: DomainNames,
-    pub qtype: u16,
-    pub qclass: u16,
+    pub qtype: Type,
+    pub qclass: Class,
 }
 
 impl DeserializeWithLength for DnsQuestion {
     fn deserialize(input: BitInput, question_count: u16) -> IResult<BitInput, Self> {
         let (input, qname) = DomainNames::deserialize(input, question_count)?;
-        let (input, qtype) = take_16bits(input)?;
-        let (input, qclass) = take_16bits(input)?;
+        let (input, qtype) = Type::deserialize(input)?;
+        let (input, qclass) = Class::deserialize(input)?;
+
         return Ok((
             input,
             DnsQuestion {
