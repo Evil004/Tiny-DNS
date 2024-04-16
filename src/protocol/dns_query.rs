@@ -10,20 +10,20 @@ pub struct DnsQuery {
 }
 
 impl DnsQuery {
-    pub fn deserialize(packet_bufffer: &mut PacketBuffer, query_count: u16) -> Result<Self> {
+    pub fn deserialize(packet_buffer: &mut PacketBuffer, query_count: u16) -> Result<Self> {
         let mut domain_names = Vec::new();
 
         for _ in 0..query_count {
-            let domain_name = packet_bufffer.read_qname()?;
+            let domain_name = packet_buffer.read_qname()?;
             domain_names.push(domain_name);
         }
 
         dbg!(domain_names.clone());
 
-        let qtype = packet_bufffer.read_u16()?;
+        let qtype = packet_buffer.read_u16()?;
         dbg!(qtype.clone());
 
-        let qclass = Class::deserialize(packet_bufffer)?;
+        let qclass = Class::deserialize(packet_buffer)?;
 
         return Ok(DnsQuery {
             domain_names,

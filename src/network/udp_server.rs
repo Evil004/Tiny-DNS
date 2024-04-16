@@ -50,7 +50,6 @@ fn handle_query(buf: [u8; 512]) -> Vec<u8> {
 
         /*let bytes: Vec<u8> = response.serialize().into_vec();
 
-        return bytes;
-    } */
+        return bytes;*/
     return Vec::new();
 }

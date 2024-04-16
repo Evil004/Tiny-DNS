@@ -16,8 +16,6 @@ pub mod dns_query;
 pub mod domain_names;
 pub mod packet_buffer;
 
-const DNS_HEADER_SIZE_IN_BYTES: u16 = 12;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DnsRecord {
     A { address: Ipv4Addr },
@@ -28,41 +26,41 @@ pub enum DnsRecord {
 }
 
 impl DnsRecord {
-    fn deserialize(packet_bufffer: &mut PacketBuffer) -> Result<Self> {
-        let type_ = packet_bufffer.read_u16()?;
+    fn deserialize(packet_buffer: &mut PacketBuffer) -> Result<Self> {
+        let type_ = packet_buffer.read_u16()?;
         match type_ {
             1 => {
                 let address = Ipv4Addr::new(
-                    packet_bufffer.read()?,
-                    packet_bufffer.read()?,
-                    packet_bufffer.read()?,
-                    packet_bufffer.read()?,
+                    packet_buffer.read()?,
+                    packet_buffer.read()?,
+                    packet_buffer.read()?,
+                    packet_buffer.read()?,
                 );
                 Ok(DnsRecord::A { address })
             }
             2 => {
-                let name_server = packet_bufffer.read_qname()?;
+                let name_server = packet_buffer.read_qname()?;
                 Ok(DnsRecord::NS { name_server })
             }
             5 => {
-                let canonical_name = packet_bufffer.read_qname()?;
+                let canonical_name = packet_buffer.read_qname()?;
                 Ok(DnsRecord::CNAME { canonical_name })
             }
             15 => {
-                let priority = packet_bufffer.read_u16()?;
-                let exchange = packet_bufffer.read_qname()?;
+                let priority = packet_buffer.read_u16()?;
+                let exchange = packet_buffer.read_qname()?;
                 Ok(DnsRecord::MX { priority, exchange })
             }
             28 => {
                 let address = Ipv6Addr::new(
-                    packet_bufffer.read_u16()?,
-                    packet_bufffer.read_u16()?,
-                    packet_bufffer.read_u16()?,
-                    packet_bufffer.read_u16()?,
-                    packet_bufffer.read_u16()?,
-                    packet_bufffer.read_u16()?,
-                    packet_bufffer.read_u16()?,
-                    packet_bufffer.read_u16()?,
+                    packet_buffer.read_u16()?,
+                    packet_buffer.read_u16()?,
+                    packet_buffer.read_u16()?,
+                    packet_buffer.read_u16()?,
+                    packet_buffer.read_u16()?,
+                    packet_buffer.read_u16()?,
+                    packet_buffer.read_u16()?,
+                    packet_buffer.read_u16()?,
                 );
                 Ok(DnsRecord::AAAA { address })
             }
@@ -123,8 +121,8 @@ impl Into<u16> for Class {
 }
 
 impl Class {
-    pub fn deserialize(packet_bufffer: &mut PacketBuffer) -> Result<Self> {
-        let class = packet_bufffer.read_u16()?;
+    pub fn deserialize(packet_buffer: &mut PacketBuffer) -> Result<Self> {
+        let class = packet_buffer.read_u16()?;
         dbg!(class.clone());
         Ok(class.into())
     }

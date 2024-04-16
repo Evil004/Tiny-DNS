@@ -36,7 +36,7 @@ pub fn take_vec_of_n_bytes(input: BitInput, num_bytes: u16) -> IResult<BitInput,
 }
 
 pub trait Deserialize<T> {
-    fn deserialize(packet_bufffer: &mut PacketBuffer) -> Result<T>
+    fn deserialize(packet_buffer: &mut PacketBuffer) -> Result<T>
     where
         Self: Sized;
 }
