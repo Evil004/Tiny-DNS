@@ -2,9 +2,8 @@ use std::{io, sync::Arc};
 
 use tokio::net::UdpSocket;
 
-use crate::{
-    parsing::{deserialize::Deserialize, serialize::Serialize}, protocol::{dns_packet::DnsPacket, packet_buffer::{self, PacketBuffer}},
-};
+use crate::protocol::{dns_packet::DnsPacket, packet_buffer::PacketBuffer};
+
 
 pub struct Server {
     socket: Arc<UdpSocket>,
@@ -25,7 +24,7 @@ impl Server {
         loop {
             let socket = self.socket.clone();
 
-            if let Ok((num_bytes, _src)) = socket.clone().recv_from(&mut buf).await {
+            if let Ok((_, _src)) = socket.clone().recv_from(&mut buf).await {
                 tokio::task::spawn(async move {
                     let response = handle_query(buf);
 

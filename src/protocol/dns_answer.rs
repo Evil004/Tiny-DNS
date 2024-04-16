@@ -1,6 +1,9 @@
-use crate::parsing::Result;
+use super::Result;
 
-use super::{dns_record::{Class, DnsRecord}, packet_buffer::PacketBuffer};
+use super::{
+    dns_record::{Class, DnsRecord},
+    packet_buffer::PacketBuffer,
+};
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -12,7 +15,12 @@ pub struct DnsAnswer {
 }
 
 impl DnsAnswer {
-    pub fn new(records: Vec<String>, response_class: Class, ttl: u32, rdata: Vec<DnsRecord>) -> Self {
+    pub fn new(
+        records: Vec<String>,
+        response_class: Class,
+        ttl: u32,
+        rdata: Vec<DnsRecord>,
+    ) -> Self {
         DnsAnswer {
             records,
             response_class,

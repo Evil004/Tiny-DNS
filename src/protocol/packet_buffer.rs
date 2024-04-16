@@ -1,4 +1,4 @@
-use crate::parsing::Result;
+use super::Result;
 
 #[derive(Debug)]
 pub struct PacketBuffer {

@@ -1,4 +1,4 @@
-use crate::parsing::Result;
+use super::Result;
 
 use super::{
     dns_answer::DnsAnswer, dns_header::DnsHeader, dns_query::DnsQuery, dns_record::DnsRecord, packet_buffer::PacketBuffer

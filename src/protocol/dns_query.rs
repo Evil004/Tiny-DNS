@@ -1,4 +1,4 @@
-use crate::parsing::Result;
+use super::Result;
 
 use super::{dns_record::Class, packet_buffer::PacketBuffer};
 

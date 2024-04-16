@@ -1,7 +1,6 @@
 use network::udp_server::Server;
 
 mod network;
-mod parsing;
 mod protocol;
 mod resolver;
 

@@ -1,4 +1,4 @@
-use crate::parsing::Result;
+use super::Result;
 
 use super::packet_buffer::PacketBuffer;
 

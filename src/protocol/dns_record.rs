@@ -1,6 +1,6 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-use crate::parsing::Result;
+use super::Result;
 
 use super::packet_buffer::PacketBuffer;
 
@@ -15,8 +15,7 @@ pub enum DnsRecord {
 
 impl DnsRecord {
     pub fn deserialize(packet_buffer: &mut PacketBuffer, type_id: u16) -> Result<Self> {
-        let type_ = packet_buffer.read_u16()?;
-        match type_ {
+        match type_id {
             1 => {
                 let address = Ipv4Addr::new(
                     packet_buffer.read()?,
