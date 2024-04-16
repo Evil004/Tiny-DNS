@@ -31,15 +31,49 @@ impl DnsQuery {
             qclass,
         });
     }
+
+    pub fn serialize(&self, packet_buffer: &mut PacketBuffer)-> Result<()>{
+
+        for name in &self.domain_names {
+            packet_buffer.write_qname(name)
+        }
+
+        packet_buffer.write_u16(self.qtype);
+        packet_buffer.write_u16(self.qclass.into());
+
+        return Ok(());
+    }
 }
 
-impl DnsQuery {
-    fn serialize(&self) -> bitvec::prelude::BitVec<u8, bitvec::prelude::Msb0> {
-        /* let mut vec: bitvec::prelude::BitVec<_, _> = bitvec::prelude::BitVec::new();
-        vec.append(&mut self.domain_names.serialize());
-        vec.append(&mut serialize_n_bits(16, self.qtype as u64));
-        vec.append(&mut serialize_n_bits(16, self.qclass as u64));
-        return vec; */
-        todo!()
+#[cfg(test)]
+mod test{
+
+
+    #[test]
+    fn serialize_and_deserialize_dns_query(){
+        use super::DnsQuery;
+        use crate::protocol::packet_buffer::PacketBuffer;
+        use crate::protocol::Class;
+
+        let mut packet_buffer = PacketBuffer::new([0; 512]);
+
+        let domain_names = vec!["goole.com".to_string(), "images.google.com".to_string(), "www.images.google.com".to_string()];
+
+        let dns_query = DnsQuery{
+            domain_names,
+            qtype: 1,
+            qclass: Class::IN,
+        };
+
+        dns_query.serialize(&mut packet_buffer).unwrap();
+
+        packet_buffer.pos = 0;
+
+
+        let dns_query = DnsQuery::deserialize(&mut packet_buffer, 3).unwrap();
+
+        assert_eq!(dns_query.domain_names, vec!["goole.com".to_string(), "images.google.com".to_string(), "www.images.google.com".to_string()]);
+        assert_eq!(dns_query.qtype, 1);
+        assert_eq!(dns_query.qclass, Class::IN);
     }
 }
