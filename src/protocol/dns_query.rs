@@ -1,8 +1,8 @@
 use crate::parsing::Result;
 
-use super::{packet_buffer::PacketBuffer, Class};
+use super::{dns_record::Class, packet_buffer::PacketBuffer};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DnsQuery {
     pub domain_names: Vec<String>,
     pub qtype: u16,
@@ -32,8 +32,7 @@ impl DnsQuery {
         });
     }
 
-    pub fn serialize(&self, packet_buffer: &mut PacketBuffer)-> Result<()>{
-
+    pub fn serialize(&self, packet_buffer: &mut PacketBuffer) -> Result<()> {
         for name in &self.domain_names {
             packet_buffer.write_qname(name)
         }
@@ -46,20 +45,24 @@ impl DnsQuery {
 }
 
 #[cfg(test)]
-mod test{
+mod test {
+    use crate::protocol::dns_record::Class;
 
 
     #[test]
-    fn serialize_and_deserialize_dns_query(){
+    fn serialize_and_deserialize_dns_query() {
         use super::DnsQuery;
         use crate::protocol::packet_buffer::PacketBuffer;
-        use crate::protocol::Class;
 
         let mut packet_buffer = PacketBuffer::new([0; 512]);
 
-        let domain_names = vec!["goole.com".to_string(), "images.google.com".to_string(), "www.images.google.com".to_string()];
+        let domain_names = vec![
+            "goole.com".to_string(),
+            "images.google.com".to_string(),
+            "www.images.google.com".to_string(),
+        ];
 
-        let dns_query = DnsQuery{
+        let dns_query = DnsQuery {
             domain_names,
             qtype: 1,
             qclass: Class::IN,
@@ -69,10 +72,16 @@ mod test{
 
         packet_buffer.pos = 0;
 
-
         let dns_query = DnsQuery::deserialize(&mut packet_buffer, 3).unwrap();
 
-        assert_eq!(dns_query.domain_names, vec!["goole.com".to_string(), "images.google.com".to_string(), "www.images.google.com".to_string()]);
+        assert_eq!(
+            dns_query.domain_names,
+            vec![
+                "goole.com".to_string(),
+                "images.google.com".to_string(),
+                "www.images.google.com".to_string()
+            ]
+        );
         assert_eq!(dns_query.qtype, 1);
         assert_eq!(dns_query.qclass, Class::IN);
     }

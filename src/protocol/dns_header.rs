@@ -2,25 +2,25 @@ use crate::parsing::Result;
 
 use super::packet_buffer::PacketBuffer;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct DnsHeader {
-    id: u16,           // 16 bits
-    is_response: bool, // 1  bit
-    opcode: u8,        // 4  bits
+    pub id: u16,           // 16 bits
+    pub is_response: bool, // 1  bit
+    pub opcode: u8,        // 4  bits
 
-    authoritative_answer: bool, // 1  bit
-    truncated_message: bool,    // 1  bit
-    recursion_desired: bool,    // 1  bit
-    recursion_available: bool,  // 1  bit
+    pub authoritative_answer: bool, // 1  bit
+    pub truncated_message: bool,    // 1  bit
+    pub recursion_desired: bool,    // 1  bit
+    pub recursion_available: bool,  // 1  bit
 
-    z: u8,             // 3  bit
-    response_code: u8, // 4  bits
+    pub z: u8,             // 3  bit
+    pub response_code: u8, // 4  bits
 
     pub question_count: u16, // 16 bits
     pub answer_count: u16,   // 16 bits
-    nscount: u16,            // 16 bits
-    arcount: u16,            // 16 bits
+    pub nscount: u16,        // 16 bits
+    pub arcount: u16,        // 16 bits
 }
 
 impl DnsHeader {

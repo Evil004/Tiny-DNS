@@ -1,4 +1,5 @@
-use crate::protocol::{Class, DnsRecord};
+use crate::protocol::dns_record::{Class, DnsRecord};
+
 
 pub fn resolv(_domain: &str, _qtype: DnsRecord, _qclass: Class) -> QueryResolved {
     QueryResolved {

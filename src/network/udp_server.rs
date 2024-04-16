@@ -39,17 +39,14 @@ impl Server {
     }
 }
 
-fn handle_query(buf: [u8; 512]) -> Vec<u8> {
+fn handle_query<'a>(buf: [u8; 512]) -> Vec<u8> {
 
     let mut packet_buffer = PacketBuffer::new(buf);
 
     let query = DnsPacket::deserialize(&mut packet_buffer).unwrap();
 
-    dbg!(query);
-        //let response = DnsResponsePacket::from_query(query, 600);
+    let response = query.create_response(300);
 
-        /*let bytes: Vec<u8> = response.serialize().into_vec();
-
-        return bytes;*/
-    return Vec::new();
+    let packet_buffer = response.serialize().unwrap();
+    return packet_buffer.buffer[..packet_buffer.pos].to_vec();
 }
