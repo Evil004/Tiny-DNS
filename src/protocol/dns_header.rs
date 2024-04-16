@@ -1,10 +1,12 @@
+
 use bitvec::{order::Msb0, vec::BitVec};
-use nom::IResult;
 
 use crate::parsing::{
-    deserialize::{take_16bits, take_1bit_bool, take_3bits, take_4bits, BitInput, Deserialize},
+    deserialize::Deserialize,
     serialize::{serialize_n_bits, Serialize},
 };
+
+use super::packet_buffer::PacketBuffer;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -18,7 +20,7 @@ pub struct DnsHeader {
     recursion_desired: bool,    // 1  bit
     recursion_available: bool,  // 1  bit
 
-    z: u8,             // 4  bit
+    z: u8,             // 3  bit
     response_code: u8, // 4  bits
 
     pub question_count: u16, // 16 bits
@@ -57,24 +59,24 @@ impl Serialize for DnsHeader {
 }
 
 impl Deserialize for DnsHeader {
-    fn deserialize(input: BitInput) -> IResult<BitInput, Self> {
-        let (input, id) = take_16bits(input)?;
-        let (input, is_response) = take_1bit_bool(input)?;
+    fn deserialize(packet_bufffer: &mut PacketBuffer) -> Result<Self> {
+        let id = packet_bufffer.read_u16()?;
+        let flags = packet_bufffer.read_u16()?;
 
-        let (input, opcode) = take_4bits(input)?;
+        let is_response = (flags >> 15) > 0;
+        let opcode = (flags >> 11 & 0x0F) as u8;
+        let authoritative_answer = (flags >> 10 & 1) > 0;
+        let truncated_message = (flags >> 9 & 1) > 0;
+        let recursion_desired = (flags >> 8 & 1) > 0;
+        let recursion_available = (flags >> 7 & 1) > 0;
+        let z = (flags >> 4 & 0x07) as u8;
+        let response_code = (flags & 0x0F) as u8;
 
-        let (input, authoritative_answer) = take_1bit_bool(input)?;
-        let (input, truncated_message) = take_1bit_bool(input)?;
 
-        let (input, recursion_desired) = take_1bit_bool(input)?;
-        let (input, recursion_available) = take_1bit_bool(input)?;
-
-        let (input, z) = take_3bits(input)?;
-        let (input, response_code) = take_4bits(input)?;
-        let (input, question_count) = take_16bits(input)?;
-        let (input, answer_count) = take_16bits(input)?;
-        let (input, nscount) = take_16bits(input)?;
-        let (input, arcount) = take_16bits(input)?;
+        let question_count = packet_bufffer.read_u16()?;
+        let answer_count = packet_bufffer.read_u16()?;
+        let nscount = packet_bufffer.read_u16()?;
+        let arcount = packet_bufffer.read_u16()?;
 
         let header = DnsHeader {
             id,
@@ -92,7 +94,7 @@ impl Deserialize for DnsHeader {
             arcount,
         };
 
-        return Ok((input, header));
+        return Ok(header);
     }
 }
 

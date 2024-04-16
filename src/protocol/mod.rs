@@ -9,6 +9,7 @@ pub mod dns_query;
 pub mod dns_question;
 pub mod dns_response;
 pub mod domain_names;
+pub mod packet_buffer;
 
 const DNS_HEADER_SIZE_IN_BYTES: u16 = 12;
 

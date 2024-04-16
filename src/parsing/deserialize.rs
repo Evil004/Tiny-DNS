@@ -1,5 +1,9 @@
 use nom::{bits::complete::take, multi::count, IResult};
 
+use crate::protocol::packet_buffer::PacketBuffer;
+
+use super::Result;
+
 pub type BitInput<'a> = (&'a [u8], usize);
 
 pub fn take_n_bits(input: BitInput, num_bits: usize) -> IResult<BitInput, u64> {
@@ -31,14 +35,8 @@ pub fn take_vec_of_n_bytes(input: BitInput, num_bytes: u16) -> IResult<BitInput,
     count(take(8usize), num_bytes as usize)(input)
 }
 
-pub trait Deserialize {
-    fn deserialize(input: BitInput) -> IResult<BitInput, Self>
+pub trait Deserialize<T> {
+    fn deserialize(packet_bufffer: &mut PacketBuffer) -> Result<T>
     where
         Self: Sized;
-}
-pub trait DeserializeWithLength {
-    fn deserialize(input: BitInput, length: u16) -> IResult<BitInput, Self>
-    where
-        Self: Sized;
-    
 }
