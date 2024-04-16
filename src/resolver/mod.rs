@@ -1,6 +1,6 @@
-use crate::protocol::{Class, Type};
+use crate::protocol::{Class, DnsRecord};
 
-pub fn resolv(_domain: &str, _qtype: Type, _qclass: Class) -> QueryResolved {
+pub fn resolv(_domain: &str, _qtype: DnsRecord, _qclass: Class) -> QueryResolved {
     QueryResolved {
         direction: &[192, 168, 1, 1],
     }

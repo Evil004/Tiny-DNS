@@ -3,7 +3,7 @@ use bitvec::{order::Msb0, vec::BitVec};
 
 use crate::parsing::{
     deserialize::Deserialize,
-    serialize::{serialize_n_bits, Serialize},
+    serialize::{serialize_n_bits, Serialize}, Result,
 };
 
 use super::packet_buffer::PacketBuffer;
@@ -58,7 +58,7 @@ impl Serialize for DnsHeader {
     }
 }
 
-impl Deserialize for DnsHeader {
+impl Deserialize<DnsHeader> for DnsHeader {
     fn deserialize(packet_bufffer: &mut PacketBuffer) -> Result<Self> {
         let id = packet_bufffer.read_u16()?;
         let flags = packet_bufffer.read_u16()?;
@@ -105,7 +105,7 @@ mod dns_header_tests {
     use crate::parsing::serialize::Serialize;
     #[test]
     fn serialize_and_deserialize_dns_header() {
-        let header = DnsHeader {
+        /* let header = DnsHeader {
             id: 3241,
             is_response: true,
             opcode: 2,
@@ -124,7 +124,7 @@ mod dns_header_tests {
         let vec = header.serialize();
         let buf = vec.into_vec();
 
-        let (_, result_header) = DnsHeader::deserialize((&buf, 0)).unwrap();
+        let (_, result_header) = DnsHeader::deserialize().unwrap();
 
         assert_eq!(header.id, result_header.id);
         assert_eq!(header.is_response, result_header.is_response);
@@ -144,7 +144,8 @@ mod dns_header_tests {
         assert_eq!(header.question_count, result_header.question_count);
         assert_eq!(header.answer_count, result_header.answer_count);
         assert_eq!(header.nscount, result_header.nscount);
-        assert_eq!(header.arcount, result_header.arcount);
+        assert_eq!(header.arcount, result_header.arcount); */
+        todo!()
     }
 
     #[test]

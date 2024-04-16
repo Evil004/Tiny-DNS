@@ -1,35 +1,45 @@
-use bitvec::{order::Msb0, vec::BitVec};
-use nom::IResult;
+use crate::parsing::Result;
 
-use crate::parsing::{deserialize::{BitInput, Deserialize, DeserializeWithLength}, serialize::Serialize};
-
-use super::{dns_header::DnsHeader, dns_question::DnsQuestion};
+use super::{packet_buffer::PacketBuffer, Class};
 
 #[derive(Debug)]
-#[allow(dead_code)]
-pub struct DnsQueryPacket {
-    pub header: DnsHeader,
-    pub question: DnsQuestion,
-    
+pub struct DnsQuery {
+    pub domain_names: Vec<String>,
+    pub qtype: u16,
+    pub qclass: Class,
 }
 
-impl Deserialize for DnsQueryPacket{
-    fn deserialize(input: BitInput) -> IResult<BitInput, DnsQueryPacket> {
-        let (input, header) = DnsHeader::deserialize(input)?;
+impl DnsQuery {
+    pub fn deserialize(packet_bufffer: &mut PacketBuffer, query_count: u16) -> Result<Self> {
+        let mut domain_names = Vec::new();
 
-        let (input, question) = DnsQuestion::deserialize(input, header.question_count)?;
+        for _ in 0..query_count {
+            let domain_name = packet_bufffer.read_qname()?;
+            domain_names.push(domain_name);
+        }
 
-        let query = DnsQueryPacket { header, question };
-        return Ok((input, query));
+        dbg!(domain_names.clone());
+
+        let qtype = packet_bufffer.read_u16()?;
+        dbg!(qtype.clone());
+
+        let qclass = Class::deserialize(packet_bufffer)?;
+
+        return Ok(DnsQuery {
+            domain_names,
+            qtype,
+            qclass,
+        });
     }
 }
 
-impl Serialize for DnsQueryPacket {
-    fn serialize(&self) -> BitVec<u8, Msb0> {
-        let mut vec: BitVec<_, _> = BitVec::new();
-        vec.append(&mut self.header.serialize());
-        vec.append(&mut self.question.serialize());
-
-        return vec;
+impl DnsQuery {
+    fn serialize(&self) -> bitvec::prelude::BitVec<u8, bitvec::prelude::Msb0> {
+        /* let mut vec: bitvec::prelude::BitVec<_, _> = bitvec::prelude::BitVec::new();
+        vec.append(&mut self.domain_names.serialize());
+        vec.append(&mut serialize_n_bits(16, self.qtype as u64));
+        vec.append(&mut serialize_n_bits(16, self.qclass as u64));
+        return vec; */
+        todo!()
     }
 }

@@ -116,7 +116,7 @@ impl DomainNames {
         let mut parts: Vec<DomainParts> = Vec::new();
         let mut final_input = input;
 
-        while domain_count < num_of_domains as usize {
+        /* while domain_count < num_of_domains as usize {
             let (input, part) = DomainParts::deserialize(final_input)?;
 
             final_input = input;
@@ -126,7 +126,7 @@ impl DomainNames {
             }
 
             parts.push(part);
-        }
+        } */
 
         let domain_names = DomainNames::new_from_vec(parts);
         return Ok((final_input, domain_names));
@@ -176,7 +176,7 @@ impl DomainParts {
         }
     }
 }
-
+/* 
 impl Deserialize for DomainParts {
     fn deserialize(input: BitInput) -> IResult<BitInput, Self>
     where
@@ -211,7 +211,7 @@ impl Deserialize for DomainParts {
         return Ok((input, DomainParts::Pointer { pos }));
     }
 }
-
+ */
 #[cfg(test)]
 mod tests {
     use super::*;
