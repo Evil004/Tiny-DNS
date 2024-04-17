@@ -29,7 +29,6 @@ impl PacketBuffer {
     pub fn read_u16(&mut self) -> Result<u16> {
         let num = ((self.read()? as u16) << 8) | self.read()? as u16;
 
-
         return Ok(num);
     }
 
@@ -90,6 +89,16 @@ impl PacketBuffer {
         return Ok(actual_domain);
     }
 
+    pub fn read_bytes(&mut self, length: usize) -> Result<Vec<u8>> {
+        let mut bytes = Vec::new();
+
+        for _ in 0..length {
+            bytes.push(self.read()?);
+        }
+
+        return Ok(bytes);
+    }
+
     pub fn write(&mut self, num: u8) {
         self.buffer[self.pos] = num;
         self.pos += 1;
@@ -110,12 +119,17 @@ impl PacketBuffer {
     pub fn write_qname(&mut self, domain: &str) {
         for label in domain.split('.') {
             self.write(label.len() as u8);
-            for c in label.chars() {
-                self.write(c as u8);
-            }
+
+            
         }
 
         self.write(0);
+    }
+
+    pub fn write_bytes(&mut self, bytes: Vec<u8>) {
+        for byte in bytes {
+            self.write(byte);
+        }
     }
 }
 

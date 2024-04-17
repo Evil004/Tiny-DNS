@@ -1,7 +1,8 @@
 use super::Result;
 
 use super::{
-    dns_answer::DnsAnswer, dns_header::DnsHeader, dns_query::DnsQuery, dns_record::DnsRecord, packet_buffer::PacketBuffer
+    dns_answer::DnsRecord, dns_header::DnsHeader, dns_query::DnsQuery, dns_record::DnsRecordType,
+    packet_buffer::PacketBuffer,
 };
 
 #[derive(Debug)]
@@ -9,7 +10,8 @@ use super::{
 pub struct DnsPacket {
     header: DnsHeader,
     questions: DnsQuery,
-    answers: Vec<DnsAnswer>,
+    answers: Vec<DnsRecord>,
+    authority: Vec<DnsRecord>,
 }
 
 impl DnsPacket {
@@ -18,16 +20,22 @@ impl DnsPacket {
         let questions = DnsQuery::deserialize(packet_buffer, header.question_count)?;
 
         let mut answers = Vec::new();
-       for _ in 0..header.answer_count {
-           let answer = DnsAnswer::deserialize(packet_buffer)?;
-           answers.push(answer);
-           
-       }
+        for _ in 0..header.answer_count {
+            let answer = DnsRecord::deserialize(packet_buffer)?;
+            answers.push(answer);
+        }
+
+        let mut authorization_name_servers = Vec::new();
+        for _ in 0..header.nscount {
+            let name_server = DnsRecord::deserialize(packet_buffer)?;
+            authorization_name_servers.push(name_server);
+        }
 
         return Ok(DnsPacket {
             header,
             questions,
             answers,
+            authority: authorization_name_servers,
         });
     }
 
@@ -36,10 +44,15 @@ impl DnsPacket {
 
         self.header.serialize(&mut packet_buffer)?;
         self.questions.serialize(&mut packet_buffer)?;
-        
+
         for answer in self.answers.iter() {
             answer.serialize(&mut packet_buffer)?;
         }
+
+        for name_server in self.authority.iter() {
+            name_server.serialize(&mut packet_buffer)?;
+        }
+
 
         return Ok(packet_buffer);
     }
