@@ -1,12 +1,8 @@
-use crate::protocol::dns_record::{Class, DnsRecord};
+use crate::protocol::{dns_answer::DnsAnswer, dns_packet::DnsPacket, dns_record::Class};
+
+pub fn resolv(query: &DnsPacket) -> DnsAnswer {
 
 
-pub fn resolv(_domain: &str, _qtype: DnsRecord, _qclass: Class) -> QueryResolved {
-    QueryResolved {
-        direction: &[192, 168, 1, 1],
-    }
-}
-
-pub struct QueryResolved<'a> {
-    pub direction: &'a [u8],
+    
+    DnsAnswer::new(vec![], Class::IN, 60, vec![])
 }

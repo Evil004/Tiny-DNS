@@ -18,10 +18,8 @@ impl DnsQuery {
             domain_names.push(domain_name);
         }
 
-        dbg!(domain_names.clone());
 
         let qtype = packet_buffer.read_u16()?;
-        dbg!(qtype.clone());
 
         let qclass = Class::deserialize(packet_buffer)?;
 

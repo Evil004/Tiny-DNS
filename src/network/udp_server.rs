@@ -4,6 +4,8 @@ use tokio::net::UdpSocket;
 
 use crate::protocol::{dns_packet::DnsPacket, packet_buffer::PacketBuffer};
 
+use super::udp_client::nslookup;
+
 
 pub struct Server {
     socket: Arc<UdpSocket>,
@@ -44,7 +46,7 @@ fn handle_query<'a>(buf: [u8; 512]) -> Vec<u8> {
 
     let query = DnsPacket::deserialize(&mut packet_buffer).unwrap();
 
-    let response = query.create_response(300);
+    let response = nslookup(query);
 
     let packet_buffer = response.serialize().unwrap();
     return packet_buffer.buffer[..packet_buffer.pos].to_vec();

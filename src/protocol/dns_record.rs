@@ -149,7 +149,6 @@ impl Into<u16> for Class {
 impl Class {
     pub fn deserialize(packet_buffer: &mut PacketBuffer) -> Result<Self> {
         let class = packet_buffer.read_u16()?;
-        dbg!(class.clone());
         Ok(class.into())
     }
 }

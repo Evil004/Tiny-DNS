@@ -1,3 +1,4 @@
+use super::dns_header::DnsHeader;
 use super::Result;
 
 use super::{
@@ -28,10 +29,10 @@ impl DnsAnswer {
             rdata,
         }
     }
-    pub fn deserialize(packet_buffer: &mut PacketBuffer, responses_count: u16) -> Result<Self> {
+    pub fn deserialize(packet_buffer: &mut PacketBuffer, header: &DnsHeader) -> Result<Self> {
         let mut domain_names = Vec::new();
 
-        for _ in 0..responses_count {
+        for _ in 0..header.question_count {
             let domain_name = packet_buffer.read_qname()?;
             domain_names.push(domain_name);
         }
@@ -42,10 +43,8 @@ impl DnsAnswer {
         let rdlength = packet_buffer.read_u16()?;
         let mut rdata = Vec::new();
 
-        for _ in 0..rdlength {
-            let type_ = DnsRecord::deserialize(packet_buffer, type_id)?;
-            rdata.push(type_);
-        }
+        let type_ = DnsRecord::deserialize(packet_buffer, type_id)?;
+        rdata.push(type_);
 
         return Ok(DnsAnswer {
             records: domain_names,

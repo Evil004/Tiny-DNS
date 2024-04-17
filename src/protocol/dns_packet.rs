@@ -15,12 +15,12 @@ pub struct DnsPacket {
 impl DnsPacket {
     pub fn deserialize(packet_buffer: &mut PacketBuffer) -> Result<Self> {
         let header = DnsHeader::deserialize(packet_buffer)?;
-        dbg!(&header);
         let questions = DnsQuery::deserialize(packet_buffer, header.question_count)?;
 
+        dbg!(&header);
         let mut answer = None;
         if header.answer_count > 0 {
-            answer = Some(DnsAnswer::deserialize(packet_buffer, header.answer_count)?);
+            answer = Some(DnsAnswer::deserialize(packet_buffer, &header)?);
         }
 
         return Ok(DnsPacket {
