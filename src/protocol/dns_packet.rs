@@ -9,7 +9,7 @@ use super::{
 pub struct DnsPacket {
     header: DnsHeader,
     questions: DnsQuery,
-    answer: Option<DnsAnswer>,
+    answers: Vec<DnsAnswer>,
 }
 
 impl DnsPacket {
@@ -17,16 +17,17 @@ impl DnsPacket {
         let header = DnsHeader::deserialize(packet_buffer)?;
         let questions = DnsQuery::deserialize(packet_buffer, header.question_count)?;
 
-        dbg!(&header);
-        let mut answer = None;
-        if header.answer_count > 0 {
-            answer = Some(DnsAnswer::deserialize(packet_buffer, &header)?);
-        }
+        let mut answers = Vec::new();
+       for _ in 0..header.answer_count {
+           let answer = DnsAnswer::deserialize(packet_buffer)?;
+           answers.push(answer);
+           
+       }
 
         return Ok(DnsPacket {
             header,
             questions,
-            answer,
+            answers,
         });
     }
 
@@ -35,18 +36,19 @@ impl DnsPacket {
 
         self.header.serialize(&mut packet_buffer)?;
         self.questions.serialize(&mut packet_buffer)?;
-        if let Some(answer) = &self.answer {
+        
+        for answer in self.answers.iter() {
             answer.serialize(&mut packet_buffer)?;
         }
 
         return Ok(packet_buffer);
     }
 
-    pub fn create_response(&self, ttl: u32) -> DnsPacket {
+    /* pub fn create_response(&self, ttl: u32) -> DnsPacket {
         let mut response = DnsPacket {
             header: self.header.clone(),
             questions: self.questions.clone(),
-            answer: None,
+            answers: Vec::new(),
         };
 
         response.header.is_response = true;
@@ -56,7 +58,7 @@ impl DnsPacket {
         response.header.response_code = 0;
         response.header.answer_count = 1;
 
-        response.answer = Some(DnsAnswer::new(
+        response.answers = vec![DnsAnswer::new(
             self.questions.domain_names.clone(),
             self.questions.qclass.clone(),
             ttl,
@@ -65,8 +67,8 @@ impl DnsPacket {
                     address: "192.168.1.1".parse().unwrap(),
                 }
             ],
-        ));
+        )];
 
         return response;
-    }
+    } */
 }

@@ -9,33 +9,23 @@ use super::{
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct DnsAnswer {
-    records: Vec<String>,
+    record: String,
     response_class: Class,
     ttl: u32,
     rdata: Vec<DnsRecord>,
 }
 
 impl DnsAnswer {
-    pub fn new(
-        records: Vec<String>,
-        response_class: Class,
-        ttl: u32,
-        rdata: Vec<DnsRecord>,
-    ) -> Self {
+    pub fn new(record: String, response_class: Class, ttl: u32, rdata: Vec<DnsRecord>) -> Self {
         DnsAnswer {
-            records,
+            record,
             response_class,
             ttl,
             rdata,
         }
     }
-    pub fn deserialize(packet_buffer: &mut PacketBuffer, header: &DnsHeader) -> Result<Self> {
-        let mut domain_names = Vec::new();
-
-        for _ in 0..header.question_count {
-            let domain_name = packet_buffer.read_qname()?;
-            domain_names.push(domain_name);
-        }
+    pub fn deserialize(packet_buffer: &mut PacketBuffer) -> Result<Self> {
+        let domain_name = packet_buffer.read_qname()?;
 
         let type_id = packet_buffer.read_u16()?;
         let response_class = Class::deserialize(packet_buffer)?;
@@ -47,7 +37,7 @@ impl DnsAnswer {
         rdata.push(type_);
 
         return Ok(DnsAnswer {
-            records: domain_names,
+            record: domain_name,
             response_class,
             ttl,
             rdata,
@@ -55,9 +45,7 @@ impl DnsAnswer {
     }
 
     pub fn serialize(&self, packet_buffer: &mut PacketBuffer) -> Result<()> {
-        for name in &self.records {
-            packet_buffer.write_qname(name);
-        }
+        packet_buffer.write_qname(&self.record);
 
         if let Some(rdata) = &self.rdata.get(0) {
             packet_buffer.write_u16(rdata.get_type());

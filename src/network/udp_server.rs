@@ -13,7 +13,7 @@ pub struct Server {
 
 impl Server {
     pub async fn new() -> io::Result<Server> {
-        let socket = UdpSocket::bind("0.0.0.0:53").await?;
+        let socket = UdpSocket::bind("0.0.0.0:5300").await?;
 
         return Ok(Server {
             socket: Arc::new(socket),
