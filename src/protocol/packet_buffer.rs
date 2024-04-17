@@ -1,14 +1,21 @@
+use std::{collections::HashMap, iter::Map};
+
 use super::Result;
 
 #[derive(Debug)]
 pub struct PacketBuffer {
     pub buffer: [u8; 512],
     pub pos: usize,
+    pub domains: HashMap<String, usize>,
 }
 
 impl PacketBuffer {
     pub fn new(buffer: [u8; 512]) -> Self {
-        PacketBuffer { buffer, pos: 0 }
+        PacketBuffer {
+            buffer,
+            pos: 0,
+            domains: HashMap::new(),
+        }
     }
 
     fn seek(&mut self, pos: usize) {
@@ -117,12 +124,25 @@ impl PacketBuffer {
     }
 
     pub fn write_qname(&mut self, domain: &str) {
-        for label in domain.split('.') {
-            self.write(label.len() as u8);
-
+        let domains_split = domain.split(".").collect::<Vec<&str>>();
+        
+        for (i, label) in domains_split.iter().enumerate() {
             
-        }
+            let all_labes_from_this_point = domains_split.get(i..).unwrap().join(".");
 
+            if let Some(pos) = self.domains.get(&all_labes_from_this_point) {
+                let pointer = 0xC000 | pos;
+                self.write_u16(pointer as u16);
+                return;
+            }
+
+            self.domains.insert(all_labes_from_this_point, self.pos);
+
+            self.write(label.len() as u8);
+            for byte in label.bytes() {
+                self.write(byte);
+            }
+        }
         self.write(0);
     }
 
