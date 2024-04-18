@@ -49,5 +49,6 @@ fn handle_query<'a>(buf: [u8; 512]) -> Vec<u8> {
     let response = nslookup(query);
 
     let packet_buffer = response.serialize().unwrap();
+
     return packet_buffer.buffer[..packet_buffer.pos].to_vec();
 }

@@ -1,8 +1,7 @@
 use super::Result;
 
 use super::{
-    dns_answer::DnsRecord, dns_header::DnsHeader, dns_query::DnsQuery, dns_record::DnsRecordType,
-    packet_buffer::PacketBuffer,
+    dns_record::DnsRecord, dns_header::DnsHeader, dns_query::DnsQuery, packet_buffer::PacketBuffer,
 };
 
 #[derive(Debug)]
@@ -52,7 +51,6 @@ impl DnsPacket {
         for name_server in self.authority.iter() {
             name_server.serialize(&mut packet_buffer)?;
         }
-
 
         return Ok(packet_buffer);
     }

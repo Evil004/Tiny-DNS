@@ -27,7 +27,9 @@ pub fn nslookup(query: DnsPacket) -> DnsPacket {
             .expect("Could not read into buffer");
 
         let mut packet_buffer = packet_buffer::PacketBuffer::new(buffer);
+
         response = DnsPacket::deserialize(&mut packet_buffer).unwrap();
+
 
         break;
     }

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, iter::Map};
+use std::collections::HashMap;
 
 use super::Result;
 
@@ -18,7 +18,7 @@ impl PacketBuffer {
         }
     }
 
-    fn seek(&mut self, pos: usize) {
+    pub fn seek(&mut self, pos: usize) {
         self.pos = pos;
     }
 
@@ -125,9 +125,8 @@ impl PacketBuffer {
 
     pub fn write_qname(&mut self, domain: &str) {
         let domains_split = domain.split(".").collect::<Vec<&str>>();
-        
+
         for (i, label) in domains_split.iter().enumerate() {
-            
             let all_labes_from_this_point = domains_split.get(i..).unwrap().join(".");
 
             if let Some(pos) = self.domains.get(&all_labes_from_this_point) {
@@ -144,6 +143,7 @@ impl PacketBuffer {
             }
         }
         self.write(0);
+
     }
 
     pub fn write_bytes(&mut self, bytes: Vec<u8>) {

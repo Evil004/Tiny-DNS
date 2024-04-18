@@ -1,6 +1,6 @@
 use super::Result;
 
-use super::{dns_record::Class, packet_buffer::PacketBuffer};
+use super::{dns_record_type::Class, packet_buffer::PacketBuffer};
 
 #[derive(Debug, Clone)]
 pub struct DnsQuery {
@@ -32,7 +32,7 @@ impl DnsQuery {
 
     pub fn serialize(&self, packet_buffer: &mut PacketBuffer) -> Result<()> {
         for name in &self.domain_names {
-            packet_buffer.write_qname(name)
+            packet_buffer.write_qname(name);
         }
 
         packet_buffer.write_u16(self.qtype);
@@ -44,7 +44,7 @@ impl DnsQuery {
 
 #[cfg(test)]
 mod test {
-    use crate::protocol::dns_record::Class;
+    use crate::protocol::dns_record_type::Class;
 
 
     #[test]
