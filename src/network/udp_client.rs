@@ -1,9 +1,10 @@
+use std::io::Error;
 use std::net::UdpSocket;
 
 use crate::protocol::dns_packet::DnsPacket;
 use crate::protocol::packet_buffer;
 
-pub fn nslookup(query: DnsPacket) -> DnsPacket {
+pub fn nslookup(query: &DnsPacket) -> Result<DnsPacket,Error> {
 
     let random_port = rand::random::<u16>() % 1000 + 4000;
 
@@ -35,5 +36,5 @@ pub fn nslookup(query: DnsPacket) -> DnsPacket {
     }
 
     drop(socket);
-    return response;
+    return Ok(response);
 }

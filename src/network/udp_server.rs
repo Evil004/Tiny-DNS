@@ -2,7 +2,7 @@ use std::{io, sync::Arc};
 
 use tokio::net::UdpSocket;
 
-use crate::protocol::{dns_packet::DnsPacket, packet_buffer::PacketBuffer};
+use crate::{protocol::{dns_packet::DnsPacket, packet_buffer::PacketBuffer}, resolv::resolver::resolv};
 
 use super::udp_client::nslookup;
 
@@ -46,7 +46,7 @@ fn handle_query<'a>(buf: [u8; 512]) -> Vec<u8> {
 
     let query = DnsPacket::deserialize(&mut packet_buffer).unwrap();
 
-    let response = nslookup(query);
+    let response = resolv(&query).unwrap();
 
     let packet_buffer = response.serialize().unwrap();
 

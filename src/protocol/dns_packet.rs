@@ -7,11 +7,11 @@ use super::{
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct DnsPacket {
-    header: DnsHeader,
-    questions: DnsQuery,
-    answers: Vec<DnsRecord>,
-    authority: Vec<DnsRecord>,
-    additional: Vec<DnsRecord>,
+    pub header: DnsHeader,
+    pub questions: DnsQuery,
+    pub answers: Vec<DnsRecord>,
+    pub authority: Vec<DnsRecord>,
+    pub additional: Vec<DnsRecord>,
 }
 
 impl DnsPacket {

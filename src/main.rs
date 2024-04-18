@@ -2,7 +2,7 @@ use network::udp_server::Server;
 
 mod network;
 mod protocol;
-mod resolver;
+mod resolv;
 
 
 #[tokio::main]

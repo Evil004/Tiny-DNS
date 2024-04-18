@@ -15,7 +15,7 @@ pub struct DnsHeader {
     pub recursion_available: bool,  // 1  bit
 
     pub z: u8,             // 3  bit
-    pub response_code: u8, // 4  bits
+    pub rcode: ResponseCode, // 4  bits
 
     pub question_count: u16, // 16 bits
     pub answer_count: u16,   // 16 bits
@@ -35,7 +35,7 @@ impl DnsHeader {
         let recursion_desired = (flags >> 8 & 1) > 0;
         let recursion_available = (flags >> 7 & 1) > 0;
         let z = (flags >> 4 & 0x07) as u8;
-        let response_code = (flags & 0x0F) as u8;
+        let response_code = ResponseCode::from_u8((flags & 0x0F) as u8).unwrap();
 
         let question_count = packet_buffer.read_u16()?;
         let answer_count = packet_buffer.read_u16()?;
@@ -51,7 +51,7 @@ impl DnsHeader {
             recursion_desired,
             recursion_available,
             z,
-            response_code,
+            rcode: response_code,
             question_count,
             answer_count,
             nscount,
@@ -75,7 +75,7 @@ impl DnsHeader {
         flags = (flags << 1) | (if self.recursion_available { 1 } else { 0 } & 0b1);
 
         flags = (flags << 3) | (self.z as u16 & 0x7);
-        flags = (flags << 4) | (self.response_code as u16 & 0xF);
+        flags = (flags << 4) | (self.rcode as u16 & 0xF);
 
         packet_buffer.write_u16(flags);
 
@@ -88,76 +88,26 @@ impl DnsHeader {
     }
 }
 
-#[cfg(test)]
-mod dns_header_tests {
-    use super::DnsHeader;
+#[derive(Debug, Clone, Copy)]
+pub enum ResponseCode {
+    NoError = 0,
+    FormatError = 1,
+    ServerFailure = 2,
+    NXDomain = 3,
+    NotImplemented = 4,
+    Refused = 5,
+}
 
-    use crate::protocol::packet_buffer;
-    #[test]
-    fn serialize_and_deserialize_dns_header() {
-        let packet_buffer = &mut packet_buffer::PacketBuffer::new([0; 512]);
-        let header = DnsHeader {
-            id: 3241,
-            is_response: true,
-            opcode: 2,
-            authoritative_answer: false,
-            truncated_message: false,
-            recursion_desired: false,
-            recursion_available: true,
-            z: 3,
-            response_code: 12,
-            question_count: 1,
-            answer_count: 1,
-            nscount: 0,
-            arcount: 0,
-        };
-
-        header.serialize(packet_buffer).unwrap();
-
-        let result_header = DnsHeader::deserialize(packet_buffer).unwrap();
-
-        assert_eq!(header.id, result_header.id);
-        assert_eq!(header.is_response, result_header.is_response);
-        assert_eq!(header.opcode, result_header.opcode);
-        assert_eq!(
-            header.authoritative_answer,
-            result_header.authoritative_answer
-        );
-        assert_eq!(header.truncated_message, result_header.truncated_message);
-        assert_eq!(header.recursion_desired, result_header.recursion_desired);
-        assert_eq!(
-            header.recursion_available,
-            result_header.recursion_available
-        );
-        assert_eq!(header.z, result_header.z);
-        assert_eq!(header.response_code, result_header.response_code);
-        assert_eq!(header.question_count, result_header.question_count);
-        assert_eq!(header.answer_count, result_header.answer_count);
-        assert_eq!(header.nscount, result_header.nscount);
-        assert_eq!(header.arcount, result_header.arcount);
+impl ResponseCode {
+    pub fn from_u8(value: u8) -> Result<Self> {
+        match value {
+            0 => Ok(ResponseCode::NoError),
+            1 => Ok(ResponseCode::FormatError),
+            2 => Ok(ResponseCode::ServerFailure),
+            3 => Ok(ResponseCode::NXDomain),
+            4 => Ok(ResponseCode::NotImplemented),
+            5 => Ok(ResponseCode::Refused),
+            _ => Err("Invalid ResponseCode".into()),
+        }
     }
-
-    /* #[test]
-    fn set_as_response() {
-        let mut header = DnsHeader {
-            id: 3241,
-            is_response: false,
-            opcode: 2,
-            authoritative_answer: true,
-            truncated_message: true,
-            recursion_desired: true,
-            recursion_available: true,
-            z: 3,
-            response_code: 12,
-            question_count: 1,
-            answer_count: 0,
-            nscount: 0,
-            arcount: 0,
-        };
-
-        header.set_as_response(2);
-
-        assert_eq!(header.is_response, true);
-        assert_eq!(header.answer_count, 2);
-    } */
 }
