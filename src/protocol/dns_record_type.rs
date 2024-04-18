@@ -192,14 +192,14 @@ pub enum Class {
     HS = 4,
 }
 
-impl From<u16> for Class {
-    fn from(value: u16) -> Self {
+impl Class {
+    pub fn from_u16(value: u16) -> Result<Self> {
         match value {
-            1 => Class::IN,
-            2 => Class::CS,
-            3 => Class::CH,
-            4 => Class::HS,
-            _ => panic!("Unknown class {}", value),
+            1 => Ok(Class::IN),
+            2 => Ok(Class::CS),
+            3 => Ok(Class::CH),
+            4 => Ok(Class::HS),
+            _ => Err("Unknown class".to_string().into()),
         }
     }
 }
@@ -218,6 +218,6 @@ impl Into<u16> for Class {
 impl Class {
     pub fn deserialize(packet_buffer: &mut PacketBuffer) -> Result<Self> {
         let class = packet_buffer.read_u16()?;
-        Ok(class.into())
+        Ok(Class::from_u16(class)?)
     }
 }

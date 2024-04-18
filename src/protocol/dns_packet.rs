@@ -11,11 +11,13 @@ pub struct DnsPacket {
     questions: DnsQuery,
     answers: Vec<DnsRecord>,
     authority: Vec<DnsRecord>,
+    additional: Vec<DnsRecord>,
 }
 
 impl DnsPacket {
     pub fn deserialize(packet_buffer: &mut PacketBuffer) -> Result<Self> {
         let header = DnsHeader::deserialize(packet_buffer)?;
+        dbg!(&header);
         let questions = DnsQuery::deserialize(packet_buffer, header.question_count)?;
 
         let mut answers = Vec::new();
@@ -30,11 +32,21 @@ impl DnsPacket {
             authorization_name_servers.push(name_server);
         }
 
+        let mut additional = Vec::new();
+        for _ in 0..header.arcount {
+            let record = DnsRecord::deserialize(packet_buffer);
+
+            if  let Ok(record) = record {
+                additional.push(record);
+            }
+        }
+
         return Ok(DnsPacket {
             header,
             questions,
             answers,
             authority: authorization_name_servers,
+            additional,
         });
     }
 
