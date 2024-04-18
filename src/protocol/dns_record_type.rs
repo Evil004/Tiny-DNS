@@ -24,6 +24,9 @@ pub enum DnsRecordType {
         expire: u32,
         minimum: u32,
     },
+    PTR{
+        domain_name: String,
+    },
     MX {
         priority: u16,
         exchange: String,
@@ -78,6 +81,10 @@ impl DnsRecordType {
                     expire,
                     minimum,
                 });
+            },
+            12 => {
+                let domain_name = packet_buffer.read_qname()?;
+                Ok(DnsRecordType::PTR { domain_name })
             }
             15 => {
                 let priority = packet_buffer.read_u16()?;
@@ -113,6 +120,7 @@ impl DnsRecordType {
             DnsRecordType::NS { .. } => 2,
             DnsRecordType::CNAME { .. } => 5,
             DnsRecordType::SOA { .. } => 6,
+            DnsRecordType::PTR { .. } => 12,
             DnsRecordType::MX { .. } => 15,
             DnsRecordType::TXT { .. } => 16,
             DnsRecordType::AAAA { .. } => 28,
@@ -153,6 +161,9 @@ impl DnsRecordType {
                 packet_buffer.write_u32(*retry);
                 packet_buffer.write_u32(*expire);
                 packet_buffer.write_u32(*minimum);
+            },
+            DnsRecordType::PTR { domain_name } => {
+                packet_buffer.write_qname(domain_name);
             }
             DnsRecordType::MX { priority, exchange } => {
                 packet_buffer.write_u16(*priority);

@@ -16,6 +16,7 @@ pub struct DnsPacket {
 impl DnsPacket {
     pub fn deserialize(packet_buffer: &mut PacketBuffer) -> Result<Self> {
         let header = DnsHeader::deserialize(packet_buffer)?;
+      
         let questions = DnsQuery::deserialize(packet_buffer, header.question_count)?;
 
         let mut answers = Vec::new();
