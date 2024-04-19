@@ -4,9 +4,6 @@ use tokio::net::UdpSocket;
 
 use crate::{protocol::{dns_packet::DnsPacket, packet_buffer::PacketBuffer}, resolv::resolver::resolv};
 
-use super::udp_client::nslookup;
-
-
 pub struct Server {
     socket: Arc<UdpSocket>,
 }
