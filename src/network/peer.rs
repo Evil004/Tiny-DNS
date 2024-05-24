@@ -6,9 +6,8 @@ use crate::protocol::packet_buffer;
 
 pub fn nslookup(ip:IpAddr, port: u16, query: &DnsPacket) -> Result<DnsPacket,Error> {
 
-    let random_port = rand::random::<u16>() % 1000 + 4000;
+    let socket = UdpSocket::bind(format!("0.0.0.0:{}", 0)).expect("Could not bind client socket");
 
-    let socket = UdpSocket::bind(format!("0.0.0.0:{}", random_port)).expect("Could not bind client socket");
     socket
         .connect(format!("{}:{}", ip, port))
         .expect("Could not connect to server");

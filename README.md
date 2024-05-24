@@ -8,6 +8,6 @@ Tiny DNS is a simple DNS server written in Rust. It is a work in progress and it
 - [ ] DNS over TCP.
 - [x] Mirroring from other DNS servers.
 - [ ] Caching.
-- [ ] Asynchronous (need to be tested).
+- [x] Asynchronous.
 - [ ] Log system.
 - [x] Configutarion.
