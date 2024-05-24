@@ -12,3 +12,4 @@ path = "src/lib.rs"
 [dependencies]
 tokio = { version = "1.37.0", features = ["full"] }
 rand = "0.8.5"
+log = "0.4.21"

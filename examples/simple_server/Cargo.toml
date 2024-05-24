@@ -1,0 +1,10 @@
+[package]
+name = "simple_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tiny_dns = {path = "../../"}
+tokio = { version = "1.37.0", features = ["full"] }
+log = "0.4.21"
+simple_logger = "5.0.0"
