@@ -1,6 +1,6 @@
 use std::{future::Future, net::IpAddr};
 use std::net::Ipv4Addr;
-use log::error;
+use log::{error, warn};
 
 use crate::{network::udp_server::Server, resolver::ResolverType};
 use crate::errors::ConfigError;
@@ -30,10 +30,19 @@ impl ServerBuilder for ServerBuilderImpl {
     }
 
     async fn build(&self) -> Result<Server, ConfigError> {
-        let port = self.port.unwrap_or(53);
+        let port = self.port;
+        if let None = port {
+            error!("{}", ConfigError::NoPortSpecified);
+            return Err(ConfigError::NoPortSpecified);
+        }
+        let port = port.unwrap();        
+        
         let bind_address = self
             .bind_address
-            .unwrap_or(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)));
+            .unwrap_or_else(|| {
+                warn!("No bind address specified, using default address 127.0.0.1");
+                IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))
+            });
 
         let resolver = self
             .resolver
@@ -46,7 +55,8 @@ impl ServerBuilder for ServerBuilderImpl {
 
         match Server::new(bind_address, port, resolver.unwrap().clone()).await {
             Ok(server) => Ok(server),
-            Err(_) => {
+            Err(e) => {
+                error!("Failed to create server: {}", e);
                 Err(ConfigError::FailedToCreateServer)
             }
         }

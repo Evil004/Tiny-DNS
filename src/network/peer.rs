@@ -1,60 +1,59 @@
-use std::io::Error;
 use std::net::{IpAddr, UdpSocket};
 use std::time::Duration;
-use log::{error};
+use crate::errors::LookupError;
 
 use crate::protocol::dns_packet::DnsPacket;
 use crate::protocol::packet_buffer;
 
 
-pub fn nslookup(ip: IpAddr, port: u16, query: &DnsPacket) -> Result<DnsPacket, Error> {
+pub fn nslookup(ip: IpAddr, port: u16, query: &DnsPacket) -> Result<DnsPacket, LookupError> {
     let socket = UdpSocket::bind(format!("0.0.0.0:{}", 0));
 
     if let Err(e) = socket {
-        error!("Failed to bind to socket: {}", e);
-        return Err(e);
+        return Err(LookupError::FailedToBindSocket(e));
     }
 
     let socket = socket.unwrap();
 
     match socket.connect(format!("{}:{}", ip, port)) {
-        Err(e) => error!("Failed to connect to {}:{}. Error: {}", ip, port, e),
+        Err(_) => {
+            return Err(LookupError::FailedToConnectSocket {
+                ip,
+                port,
+            });
+        }
         Ok(_) => (),
     }
 
 
     match socket.set_read_timeout(Some(Duration::from_secs(5))) {
-        Err(e) => error!("Failed to set read timeout: {}", e),
+        Err(_) => {
+            return Err(LookupError::FailedToSetReadTimeout);
+        }
         Ok(_) => ()
     }
 
     let response: DnsPacket;
-    loop {
-        let input = query.serialize().unwrap();
-        match socket.send(&input.buffer) {
-            Err(e) => {
-                error!("Failed to send query: {}", e);
-                continue;
-            }
-            Ok(_) => (),
+    let input = query.serialize().unwrap();
+    match socket.send(&input.buffer) {
+        Err(_) => {
+            return Err(LookupError::FailedToSendQuery);
         }
-
-        let mut buffer = [0u8; 512];
-        match socket.recv_from(&mut buffer){
-            Err(e) => {
-                error!("Failed to receive response: {}", e);
-                continue;
-            }
-            Ok(_) => ()
-        }
-
-        let mut packet_buffer = packet_buffer::PacketBuffer::new(buffer);
-
-        response = DnsPacket::deserialize(&mut packet_buffer).unwrap();
-
-
-        break;
+        Ok(_) => (),
     }
+
+    let mut buffer = [0u8; 512];
+    match socket.recv_from(&mut buffer) {
+        Err(e) => {
+            return Err(LookupError::FailedToReceiveResponse(e));
+        }
+        Ok(_) => ()
+    }
+
+    let mut packet_buffer = packet_buffer::PacketBuffer::new(buffer);
+
+    response = DnsPacket::deserialize(&mut packet_buffer).unwrap();
+
 
     drop(socket);
     return Ok(response);
